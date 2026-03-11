@@ -11,5 +11,6 @@ def now_factory():
 class Question:
     """Question Domain Class"""
     id: UUID
+    poll_id: UUID
     question: str
     options: list[str]

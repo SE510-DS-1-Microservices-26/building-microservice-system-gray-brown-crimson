@@ -2,6 +2,9 @@ from uuid import UUID
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
 
+from .answer import Answer
+
+
 def now_factory():
     return datetime.now(UTC)
 
@@ -12,4 +15,5 @@ class Vote:
     poll_id: UUID
     user_id: UUID
         
+    answers: list[Answer] = field(default_factory=list)
     created_at: datetime = field(default_factory=now_factory)

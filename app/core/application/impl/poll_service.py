@@ -33,6 +33,7 @@ class PollService(PollServiceProtocol):
         poll.questions = [
             Question(
                 id=uuid.uuid4(),
+                poll_id=uuid.UUID(poll_id),
                 question=q.question,
                 options=q.options
             ) for q in dto.questions
