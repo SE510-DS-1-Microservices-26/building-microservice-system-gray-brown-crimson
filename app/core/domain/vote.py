@@ -9,5 +9,7 @@ def now_factory():
 @dataclass
 class Vote:
     id: UUID
-    name: str
+    poll_id: UUID
+    user_id: UUID
+        
     created_at: datetime = field(default_factory=now_factory)

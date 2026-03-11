@@ -2,9 +2,9 @@ from uuid import UUID
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
 
-from .Question import Question
-from .Vote import Vote
-from .PollStatus import PollStatus
+from .question import Question
+from .vote import Vote
+from .poll_status import PollStatus
 
 
 def now_factory():

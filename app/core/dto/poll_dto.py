@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .QuestionDto import QuestionDto
+from .question_dto import QuestionDto
 
 
 class PollDto(BaseModel):
