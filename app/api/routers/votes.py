@@ -14,7 +14,7 @@ def get_vote_by_id(
 ):  
     return service.get_votes(poll_id, "1")
 
-@router.post("/")
+@router.post("/{poll_id}")
 def add_vote(
     poll_id: str,
     payload: CreateVoteDto,

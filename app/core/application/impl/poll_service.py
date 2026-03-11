@@ -33,7 +33,7 @@ class PollService(PollServiceProtocol):
         poll.questions = [
             Question(
                 id=uuid.uuid4(),
-                poll_id=uuid.UUID(poll_id),
+                poll_id=poll.id,
                 question=q.question,
                 options=q.options
             ) for q in dto.questions
@@ -44,12 +44,12 @@ class PollService(PollServiceProtocol):
     def delete_poll(self, poll_id: str, user_id: str) -> None:
         self.polls = [
             p for p in self.polls 
-            if ((str(p.short_id) != poll_id) and (str(p.user_id) != user_id))
+            if ((str(p.short_id) != poll_id) or (str(p.user_id) != user_id))
         ]
     
     def _find_poll_or_raise(self, poll_id: str, user_id: str) -> Poll:
         poll = next(
-            (poll for poll in self.polls if (str(poll.id) == poll_id and str(poll.user_id) == user_id)),
+            (poll for poll in self.polls if (str(poll.short_id) == poll_id and str(poll.user_id) == user_id)),
             None
         )
         
@@ -60,4 +60,4 @@ class PollService(PollServiceProtocol):
         return poll
     
     def _is_poll_exists(self, poll_id: str) -> bool:
-        return any(str(poll.id) == poll_id for poll in self.polls)    
+        return any(str(poll.short_id) == poll_id for poll in self.polls)
