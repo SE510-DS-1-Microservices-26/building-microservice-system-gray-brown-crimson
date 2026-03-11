@@ -12,7 +12,7 @@ def get_poll_by_id(
     poll_id: str,
     service: PollServiceProtocol = Depends(get_poll_service)
 ):  
-    return service.get_poll(poll_id)
+    return service.get_poll(poll_id, "1")
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_poll(
@@ -29,4 +29,11 @@ def update_poll(
     dto: CreatePollDto,
     service: PollServiceProtocol = Depends(get_poll_service)
 ):
-    return service.update_poll(poll_id, dto)
+    return service.update_poll(poll_id, "1", dto)
+
+@router.delete("/{poll_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_poll(
+    poll_id: str,
+    service: PollServiceProtocol = Depends(get_poll_service)    
+):
+    return service.delete_poll(poll_id, "1")

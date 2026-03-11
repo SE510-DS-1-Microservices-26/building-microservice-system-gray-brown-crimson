@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 
 from app.api.dependencies import get_vote_service
 from app.core.application.protocol import VoteServiceProtocol
-from app.core.dto import CreatePollDto
+from app.core.dto import CreateVoteDto
 
 
 router = APIRouter(prefix="/api/v1/votes", tags=["votes"])
@@ -12,4 +12,12 @@ def get_vote_by_id(
     poll_id: str,
     service: VoteServiceProtocol = Depends(get_vote_service)
 ):  
-    return service.get_votes(poll_id)
+    return service.get_votes(poll_id, "1")
+
+@router.post("/")
+def add_vote(
+    poll_id: str,
+    payload: CreateVoteDto,
+    service: VoteServiceProtocol = Depends(get_vote_service)
+):
+    return service.add_vote(poll_id, "1", payload)

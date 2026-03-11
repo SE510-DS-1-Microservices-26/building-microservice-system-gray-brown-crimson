@@ -6,10 +6,10 @@ from app.core.dto import CreateVoteDto, VoteDto
 
 class VoteMapper:
     @staticmethod
-    def to_domain(dto: CreateVoteDto, user_id: str) -> Vote:
+    def to_domain(dto: CreateVoteDto, poll_id: str, user_id: str) -> Vote:
         return Vote(
             id=uuid.uuid4(),
-            poll_id=uuid.UUID(dto.poll_id),
+            poll_id=uuid.UUID(poll_id),
             user_id=uuid.UUID(user_id)
         )
         
