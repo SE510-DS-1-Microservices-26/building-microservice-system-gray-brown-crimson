@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, status
 
-from app.api.dependencies import get_poll_service
+from app.api.dependencies import get_poll_service, get_current_user_id
 from app.core.application.protocol import PollServiceProtocol
-from app.core.dto import CreatePollDto
+from app.core.dto import CreatePollDto, UpdatePollStatusDto
 
 
 router = APIRouter(prefix="/api/v1/polls", tags=["polls"])
@@ -10,30 +10,41 @@ router = APIRouter(prefix="/api/v1/polls", tags=["polls"])
 @router.get("/{poll_id}")
 def get_poll_by_id(
     poll_id: str,
-    service: PollServiceProtocol = Depends(get_poll_service)
-):  
-    return service.get_poll(poll_id, "1")
+    user_id: str = Depends(get_current_user_id),
+    service: PollServiceProtocol = Depends(get_poll_service),
+):
+    return service.get_poll(poll_id, user_id)
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_poll(
     dto: CreatePollDto,
-    service: PollServiceProtocol = Depends(get_poll_service)
+    user_id: str = Depends(get_current_user_id),
+    service: PollServiceProtocol = Depends(get_poll_service),
 ):
-    poll = service.add_new_poll("1", dto)
-    
-    return poll
+    return service.add_new_poll(user_id, dto)
+
+@router.patch("/{poll_id}/status")
+def update_poll_status(
+    poll_id: str,
+    dto: UpdatePollStatusDto,
+    user_id: str = Depends(get_current_user_id),
+    service: PollServiceProtocol = Depends(get_poll_service),
+):
+    return service.update_poll_status(poll_id, user_id, dto)
 
 @router.put("/{poll_id}")
 def update_poll(
     poll_id: str,
     dto: CreatePollDto,
-    service: PollServiceProtocol = Depends(get_poll_service)
+    user_id: str = Depends(get_current_user_id),
+    service: PollServiceProtocol = Depends(get_poll_service),
 ):
-    return service.update_poll(poll_id, "1", dto)
+    return service.update_poll(poll_id, user_id, dto)
 
 @router.delete("/{poll_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_poll(
     poll_id: str,
-    service: PollServiceProtocol = Depends(get_poll_service)    
+    user_id: str = Depends(get_current_user_id),
+    service: PollServiceProtocol = Depends(get_poll_service),
 ):
-    return service.delete_poll(poll_id, "1")
+    return service.delete_poll(poll_id, user_id)
