@@ -1,7 +1,9 @@
 from pydantic import BaseModel
 
 
-class CreateUserDto(BaseModel):
+class UserDto(BaseModel):
+    id: str
+    username: str
     firstname: str
     lastname: str
     email: str

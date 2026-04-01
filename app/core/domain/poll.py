@@ -1,20 +1,24 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
+from nanoid import generate
 
-from .Question import Question
-from .Vote import Vote
-from .PollStatus import PollStatus
+from .question import Question
+from .vote import Vote
+from .poll_status import PollStatus
 
 
 def now_factory():
     return datetime.now(UTC)
 
+def generate_short_id() -> str:
+    return generate(size=8)    
 
 @dataclass(kw_only=True)
 class Poll:
     """Poll Domain Class"""
-    id: UUID
+    id: UUID = field(default_factory=uuid4)
+    short_id: str = field(default_factory=generate_short_id)
     name: str
     status: PollStatus = PollStatus.DRAFT
     user_id: UUID

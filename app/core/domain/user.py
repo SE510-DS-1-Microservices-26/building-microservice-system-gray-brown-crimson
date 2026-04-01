@@ -6,11 +6,11 @@ from datetime import datetime, UTC
 def now_factory():
     return datetime.now(UTC)
 
-
 @dataclass
 class User:
     """User Domain Class"""
     id: UUID
+    username: str
     firstname: str
     lastname: str
     email: str

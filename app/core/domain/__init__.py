@@ -1,8 +1,8 @@
-from .Poll import Poll
-from .PollStatus import PollStatus
-from .Question import Question
-from .User import User
-from .Vote import Vote
+from .poll import Poll
+from .poll_status import PollStatus
+from .question import Question
+from .user import User
+from .vote import Vote
 
 
 __all__ = [

@@ -17,7 +17,6 @@ class PollMapper:
         ]
         
         return Poll(
-            id=uuid.uuid4(),
             name=dto.name,
             user_id=uuid.UUID(user_id),
             questions=domain_questions
@@ -26,7 +25,7 @@ class PollMapper:
     @staticmethod
     def to_dto(domain: Poll) -> PollDto:
         return PollDto(
-            id=str(domain.id),
+            id=str(domain.short_id),
             name=domain.name,
             questions=[
                 QuestionDto(
