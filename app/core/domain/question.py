@@ -14,3 +14,9 @@ class Question:
     poll_id: UUID
     question: str
     options: list[str]
+
+    def __post_init__(self) -> None:
+        if not self.question or not self.question.strip():
+            raise ValueError("Question text cannot be empty.")
+        if len(self.options) < 2:
+            raise ValueError("A question must have at least 2 options.")

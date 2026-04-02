@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.api.routers import polls, votes, users
-from app.core.exception import PollNotFoundException, UserNotFoundException
+from app.core.exception import PollNotFoundException, PollNotEditableException, UserNotFoundException
 from app.core.logger import setup_logging
 
 
@@ -36,6 +36,18 @@ async def poll_not_found_handler(_: Request, exc: PollNotFoundException):
         }
     )
     
+@app.exception_handler(PollNotEditableException)
+async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": "Poll Not Editable",
+            "poll_id": exc.poll_id,
+            "current_status": exc.status,
+        }
+    )
+
+
 @app.exception_handler(UserNotFoundException)
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
