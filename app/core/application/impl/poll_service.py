@@ -6,7 +6,7 @@ from app.core.application.protocol.poll_repository_protocol import PollRepositor
 from app.core.domain import Poll, Question
 from app.core.dto import CreatePollDto, PollDto, UpdatePollStatusDto
 from app.core.mapper import PollMapper
-from app.core.exception import PollNotFoundException
+from app.core.exception import PollNotFoundException, PollNotEditableException
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class PollService(PollServiceProtocol):
     def update_poll(self, poll_id: str, user_id: str, dto: CreatePollDto) -> PollDto:
         poll = self._find_poll_or_raise(poll_id, user_id)
         poll.name = dto.name
-        poll.questions = [
+        new_questions = [
             Question(
                 id=uuid.uuid4(),
                 poll_id=poll.id,
@@ -37,6 +37,10 @@ class PollService(PollServiceProtocol):
             )
             for q in dto.questions
         ]
+        try:
+            poll.set_questions(new_questions)
+        except ValueError as exc:
+            raise PollNotEditableException(poll_id, poll.status.value) from exc
         self._repository.save(poll)
         return PollMapper.to_dto(poll)
 

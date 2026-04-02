@@ -105,6 +105,33 @@ def test_get_poll_returns_404_for_unknown(client):
     assert response.status_code == 404
 
 
+def test_put_poll_returns_409_when_not_draft(client):
+    create_resp = client.post(
+        "/api/v1/polls/",
+        json={
+            "name": "Lock Test",
+            "questions": [{"question": "Pick one?", "options": ["A", "B"]}],
+        },
+        headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
+    )
+    poll_id = create_resp.json()["id"]
+    client.patch(
+        f"/api/v1/polls/{poll_id}/status",
+        json={"status": "active"},
+        headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
+    )
+    put_resp = client.put(
+        f"/api/v1/polls/{poll_id}",
+        json={
+            "name": "Hacked",
+            "questions": [{"question": "New Q?", "options": ["X", "Y"]}],
+        },
+        headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
+    )
+    assert put_resp.status_code == 409
+    assert put_resp.json()["current_status"] == "active"
+
+
 def test_patch_poll_status(client):
     create_resp = client.post(
         "/api/v1/polls/",

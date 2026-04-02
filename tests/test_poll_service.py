@@ -8,6 +8,7 @@ from app.core.dto.create_poll_dto import CreatePollDto
 from app.core.dto.create_question_dto import CreateQuestionDto
 from app.core.dto.update_poll_status_dto import UpdatePollStatusDto
 from app.core.exception.poll_not_found_exception import PollNotFoundException
+from app.core.exception.poll_not_editable_exception import PollNotEditableException
 
 
 class FakePollRepository:
@@ -76,10 +77,43 @@ def test_update_poll_status_transitions_to_active():
 
 
 def test_update_poll_status_invalid_transition_raises():
-    from app.core.exception.poll_not_found_exception import PollNotFoundException
     service = make_service()
     poll_dto = service.add_new_poll(USER_ID, create_dto())
     with pytest.raises(ValueError, match="Cannot transition poll"):
         service.update_poll_status(
             poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.COMPLETED)
+        )
+
+
+def test_update_poll_allowed_in_draft():
+    service = make_service()
+    poll_dto = service.add_new_poll(USER_ID, create_dto("Original"))
+    updated = service.update_poll(
+        poll_dto.id, USER_ID,
+        CreatePollDto(name="Updated", questions=[CreateQuestionDto(question="New Q?", options=["X", "Y"])])
+    )
+    assert updated.name == "Updated"
+    assert len(updated.questions) == 1
+
+
+def test_update_poll_raises_when_active():
+    service = make_service()
+    poll_dto = service.add_new_poll(USER_ID, create_dto())
+    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE))
+    with pytest.raises(PollNotEditableException):
+        service.update_poll(
+            poll_dto.id, USER_ID,
+            CreatePollDto(name="Hack", questions=[CreateQuestionDto(question="Q?", options=["A", "B"])])
+        )
+
+
+def test_update_poll_raises_when_completed():
+    service = make_service()
+    poll_dto = service.add_new_poll(USER_ID, create_dto())
+    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE))
+    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.COMPLETED))
+    with pytest.raises(PollNotEditableException):
+        service.update_poll(
+            poll_dto.id, USER_ID,
+            CreatePollDto(name="Hack", questions=[CreateQuestionDto(question="Q?", options=["A", "B"])])
         )

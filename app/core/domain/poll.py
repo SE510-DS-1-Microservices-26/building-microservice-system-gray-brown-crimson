@@ -44,3 +44,10 @@ class Poll:
         if self.status != PollStatus.DRAFT:
             raise ValueError("Questions can only be added to a poll in DRAFT status.")
         self.questions.append(question)
+
+    def set_questions(self, questions: list[Question]) -> None:
+        if self.status != PollStatus.DRAFT:
+            raise ValueError(
+                f"Cannot modify questions: poll is {self.status.value}, not draft."
+            )
+        self.questions = questions
