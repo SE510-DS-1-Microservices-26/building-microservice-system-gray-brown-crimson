@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import get_user_service
 from app.core.application.protocol import UserServiceProtocol
-from app.core.dto import CreateUserDto
+from app.core.dto import CreateUserDto, UpdateUserDto
 
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
@@ -24,7 +24,7 @@ def get_user_info(
 @router.put("/{user_id}")
 def update_user(
     user_id: str,
-    payload: CreateUserDto,
+    payload: UpdateUserDto,
     service: UserServiceProtocol = Depends(get_user_service)
 ):
     return service.update_user(user_id, payload)

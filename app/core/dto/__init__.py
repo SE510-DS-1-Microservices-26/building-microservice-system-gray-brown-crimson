@@ -4,6 +4,7 @@ from .update_poll_status_dto import UpdatePollStatusDto
 from .create_question_dto import CreateQuestionDto
 from .question_dto import QuestionDto
 from .create_user_dto import CreateUserDto
+from .update_user_dto import UpdateUserDto
 from .user_dto import UserDto
 from .create_answer_dto import CreateAnswerDto
 from .answer_dto import AnswerDto
@@ -18,6 +19,7 @@ __all__ = [
     "CreateQuestionDto",
     "QuestionDto",
     "CreateUserDto",
+    "UpdateUserDto",
     "UserDto",
     "CreateAnswerDto",
     "AnswerDto",

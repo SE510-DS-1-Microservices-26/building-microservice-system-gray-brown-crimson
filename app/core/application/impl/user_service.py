@@ -3,7 +3,7 @@ import uuid
 
 from app.core.application.protocol import UserServiceProtocol
 from app.core.application.protocol.user_repository_protocol import UserRepositoryProtocol
-from app.core.dto import CreateUserDto, UserDto
+from app.core.dto import CreateUserDto, UpdateUserDto, UserDto
 from app.core.domain import User
 from app.core.mapper import UserMapper
 from app.core.exception import UserNotFoundException
@@ -24,7 +24,7 @@ class UserService(UserServiceProtocol):
         user = self._find_user_or_raise(user_id)
         return UserMapper.to_dto(user)
 
-    def update_user(self, user_id: str, user_data: CreateUserDto) -> UserDto:
+    def update_user(self, user_id: str, user_data: UpdateUserDto) -> UserDto:
         user = self._find_user_or_raise(user_id)
         user.firstname = user_data.firstname
         user.lastname = user_data.lastname
