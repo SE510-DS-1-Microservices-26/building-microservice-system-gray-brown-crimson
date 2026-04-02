@@ -28,7 +28,7 @@ class PollMapper:
     @staticmethod
     def to_dto(domain: Poll) -> PollDto:
         return PollDto(
-            id=str(domain.short_id),
+            id=str(domain.id),
             name=domain.name,
             status=domain.status,
             questions=[

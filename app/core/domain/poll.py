@@ -1,7 +1,6 @@
 from uuid import UUID, uuid4
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
-from nanoid import generate
 
 from .question import Question
 from .vote import Vote
@@ -18,13 +17,10 @@ _VALID_TRANSITIONS: dict[PollStatus, set[PollStatus]] = {
 def now_factory():
     return datetime.now(UTC)
 
-def generate_short_id() -> str:
-    return generate(size=8)
 
 @dataclass(kw_only=True)
 class Poll:
     id: UUID = field(default_factory=uuid4)
-    short_id: str = field(default_factory=generate_short_id)
     name: str
     status: PollStatus = PollStatus.DRAFT
     user_id: UUID

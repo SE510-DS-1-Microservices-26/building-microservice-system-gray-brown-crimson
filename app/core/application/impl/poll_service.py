@@ -11,6 +11,7 @@ from app.core.exception import PollNotFoundException
 
 logger = logging.getLogger(__name__)
 
+
 class PollService(PollServiceProtocol):
     def __init__(self, repository: PollRepositoryProtocol):
         self._repository = repository
@@ -46,14 +47,24 @@ class PollService(PollServiceProtocol):
         return PollMapper.to_dto(poll)
 
     def delete_poll(self, poll_id: str, user_id: str) -> None:
-        self._repository.delete(poll_id, uuid.UUID(user_id))
+        self._repository.delete(uuid.UUID(poll_id), uuid.UUID(user_id))
+
+    def find_poll_for_user(self, poll_id: str, user_id: str) -> Poll:
+        return self._find_poll_or_raise(poll_id, user_id)
+
+    def find_poll(self, poll_id: str) -> Poll:
+        poll = self._repository.find_by_id_any_user(uuid.UUID(poll_id))
+        if not poll:
+            logger.warning(f"Poll retrieval failed. ID {poll_id} not found in data.")
+            raise PollNotFoundException(poll_id)
+        return poll
 
     def _find_poll_or_raise(self, poll_id: str, user_id: str) -> Poll:
-        poll = self._repository.find_by_short_id(poll_id, uuid.UUID(user_id))
+        poll = self._repository.find_by_id(uuid.UUID(poll_id), uuid.UUID(user_id))
         if not poll:
             logger.warning(f"Poll retrieval failed. ID {poll_id} not found in data.")
             raise PollNotFoundException(poll_id)
         return poll
 
     def _is_poll_exists(self, poll_id: str) -> bool:
-        return self._repository.exists_by_short_id(poll_id)
+        return self._repository.exists_by_id(uuid.UUID(poll_id))

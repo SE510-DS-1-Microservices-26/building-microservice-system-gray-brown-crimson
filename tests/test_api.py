@@ -3,32 +3,37 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.main import app
-from app.api.dependencies import get_poll_service, get_user_service
+from app.api.dependencies import get_poll_service, get_user_service, get_vote_service
 from app.core.application.impl.poll_service import PollService
 from app.core.application.impl.user_service import UserService
+from app.core.application.impl.vote_service import VoteService
 from app.core.domain.poll import Poll
 from app.core.domain.user import User
+from app.core.domain.vote import Vote
 
 
 class FakePollRepository:
     def __init__(self):
-        self._store: dict[str, Poll] = {}
+        self._store: dict[uuid.UUID, Poll] = {}
 
-    def find_by_short_id(self, short_id: str, user_id: uuid.UUID) -> Poll | None:
-        poll = self._store.get(short_id)
+    def find_by_id(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> Poll | None:
+        poll = self._store.get(poll_id)
         if poll and poll.user_id == user_id:
             return poll
         return None
 
+    def find_by_id_any_user(self, poll_id: uuid.UUID) -> Poll | None:
+        return self._store.get(poll_id)
+
     def save(self, poll: Poll) -> Poll:
-        self._store[poll.short_id] = poll
+        self._store[poll.id] = poll
         return poll
 
-    def delete(self, short_id: str, user_id: uuid.UUID) -> None:
-        self._store.pop(short_id, None)
+    def delete(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        self._store.pop(poll_id, None)
 
-    def exists_by_short_id(self, short_id: str) -> bool:
-        return short_id in self._store
+    def exists_by_id(self, poll_id: uuid.UUID) -> bool:
+        return poll_id in self._store
 
 
 class FakeUserRepository:
@@ -46,11 +51,26 @@ class FakeUserRepository:
         self._store.pop(user_id, None)
 
 
+class FakeVoteRepository:
+    def __init__(self):
+        self._store: list[Vote] = []
+
+    def save(self, vote: Vote) -> Vote:
+        self._store.append(vote)
+        return vote
+
+    def find_by_poll_and_user(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> list[Vote]:
+        return [v for v in self._store if v.poll_id == poll_id and v.user_id == user_id]
+
+
 @pytest.fixture
 def client():
-    repo = FakePollRepository()
+    poll_repo = FakePollRepository()
+    vote_repo = FakeVoteRepository()
     user_repo = FakeUserRepository()
-    app.dependency_overrides[get_poll_service] = lambda: PollService(repo)
+    poll_service = PollService(poll_repo)
+    app.dependency_overrides[get_poll_service] = lambda: poll_service
+    app.dependency_overrides[get_vote_service] = lambda: VoteService(poll_service, vote_repo)
     app.dependency_overrides[get_user_service] = lambda: UserService(user_repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
@@ -79,7 +99,7 @@ def test_create_poll_returns_201(client):
 
 def test_get_poll_returns_404_for_unknown(client):
     response = client.get(
-        "/api/v1/polls/notexist",
+        f"/api/v1/polls/{uuid.uuid4()}",
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )
     assert response.status_code == 404

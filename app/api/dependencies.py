@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.application.protocol import PollServiceProtocol, VoteServiceProtocol, UserServiceProtocol
 from app.core.application.impl import PollService, VoteService, UserService
-from app.core.infrastructure import SessionLocal, PollRepository, UserRepository
+from app.core.infrastructure import SessionLocal, PollRepository, UserRepository, VoteRepository
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -22,8 +22,9 @@ def get_poll_service(db: Session = Depends(get_db)) -> PollServiceProtocol:
 
 def get_vote_service(
     poll_service: PollServiceProtocol = Depends(get_poll_service),
+    db: Session = Depends(get_db),
 ) -> VoteServiceProtocol:
-    return VoteService(poll_service)
+    return VoteService(poll_service, VoteRepository(db))
 
 
 def get_user_service(db: Session = Depends(get_db)) -> UserServiceProtocol:

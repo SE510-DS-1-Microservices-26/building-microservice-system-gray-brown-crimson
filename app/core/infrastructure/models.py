@@ -9,7 +9,6 @@ class PollModel(Base):
     __tablename__ = "polls"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    short_id: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     user_id: Mapped[UUID] = mapped_column(nullable=False)
