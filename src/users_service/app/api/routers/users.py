@@ -5,7 +5,7 @@ from src.users_service.app.core.application import UserService
 from src.users_service.app.core.dto import CreateUserDto, UpdateUserDto
 
 
-router = APIRouter(prefix="/api/v2/users", tags=["users"])
+router = APIRouter(prefix="/api/v2/users/users", tags=["users"])
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(

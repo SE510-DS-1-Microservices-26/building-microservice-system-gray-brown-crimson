@@ -4,7 +4,7 @@ from fastapi import Depends, Header
 from sqlalchemy.orm import Session
 
 from src.core_service.app.core.application import PollService, VoteService
-from src.core_service.app.core.infrastructure import SessionLocal
+from src.core_service.app.core.infrastructure import SessionLocal, UserServiceClient
 from src.core_service.app.core.infrastructure.repository import PollRepository, VoteRepository
 
 
@@ -17,7 +17,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_poll_service(db: Session = Depends(get_db)) -> PollService:
-    return PollService(PollRepository(db))
+    return PollService(PollRepository(db), UserServiceClient("http://localhost:8001/api/v2/users"))
 
 
 def get_vote_service(

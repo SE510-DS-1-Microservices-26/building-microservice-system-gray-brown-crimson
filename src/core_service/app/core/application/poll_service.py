@@ -5,21 +5,25 @@ from src.core_service.app.core.domain import Poll, Question
 from src.core_service.app.core.dto import CreatePollDto, PollDto, UpdatePollStatusDto
 from src.core_service.app.core.mapper import PollMapper
 from src.core_service.app.core.exception import PollNotFoundException, PollNotEditableException
-from src.core_service.app.core.application.protocol import PollRepositoryProtocol
+from src.core_service.app.core.application.protocol import PollRepositoryProtocol, UserServiceProtocol
+from src.core_service.app.core.exception import UserNotFoundException
 
 
 logger = logging.getLogger(__name__)
 
 
 class PollService:
-    def __init__(self, repository: PollRepositoryProtocol):
+    def __init__(self, repository: PollRepositoryProtocol, user_client: UserServiceProtocol):
         self._repository = repository
+        self._user_client = user_client
 
     def get_poll(self, poll_id: str, user_id: str) -> PollDto:
         poll = self._find_poll_or_raise(poll_id, user_id)
         return PollMapper.to_dto(poll)
 
     def add_new_poll(self, user_id: str, dto: CreatePollDto) -> PollDto:
+        if not self._user_client.user_exists(user_id):
+            raise UserNotFoundException(user_id)
         poll = PollMapper.to_domain(dto, user_id)
         self._repository.save(poll)
         return PollMapper.to_dto(poll)
