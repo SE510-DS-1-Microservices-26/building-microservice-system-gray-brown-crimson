@@ -8,7 +8,7 @@ from src.core_service.app.core.dto import CreateVoteDto
 router = APIRouter(prefix="/api/v2/core/votes", tags=["votes"])
 
 @router.get("/{poll_id}")
-def get_vote_by_id(
+def get_votes_by_poll_id(
     poll_id: str,
     user_id: str = Depends(get_current_user_id),
     service: VoteService = Depends(get_vote_service),
