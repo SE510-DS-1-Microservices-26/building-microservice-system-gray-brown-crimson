@@ -3,11 +3,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.core_service.app.api.main import app
-from src.core_service.app.api.dependencies import get_poll_service, get_user_service, get_vote_service
+from src.core_service.app.api.dependencies import get_poll_service, get_vote_service
 from src.core_service.app.core.application import PollService, VoteService
-from users_service.app.core.application.user_service import UserService
 from src.core_service.app.core.domain.poll import Poll
-from src.users_service.app.core.domain.user import User
 from src.core_service.app.core.domain.vote import Vote
 
 
@@ -35,21 +33,6 @@ class FakePollRepository:
         return poll_id in self._store
 
 
-class FakeUserRepository:
-    def __init__(self):
-        self._store: dict[uuid.UUID, User] = {}
-
-    def find_by_id(self, user_id: uuid.UUID) -> User | None:
-        return self._store.get(user_id)
-
-    def save(self, user: User) -> User:
-        self._store[user.id] = user
-        return user
-
-    def delete(self, user_id: uuid.UUID) -> None:
-        self._store.pop(user_id, None)
-
-
 class FakeVoteRepository:
     def __init__(self):
         self._store: list[Vote] = []
@@ -66,24 +49,22 @@ class FakeVoteRepository:
 def client():
     poll_repo = FakePollRepository()
     vote_repo = FakeVoteRepository()
-    user_repo = FakeUserRepository()
     poll_service = PollService(poll_repo)
     app.dependency_overrides[get_poll_service] = lambda: poll_service
     app.dependency_overrides[get_vote_service] = lambda: VoteService(poll_service, vote_repo)
-    app.dependency_overrides[get_user_service] = lambda: UserService(user_repo)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
 def test_health_endpoint_returns_ok(client):
-    response = client.get("/api/v1/health")
+    response = client.get("/api/v2/core/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
 def test_create_poll_returns_201(client):
     response = client.post(
-        "/api/v1/polls/",
+        "/api/v2/core/polls/",
         json={
             "name": "Favourite Language",
             "questions": [{"question": "Best language?", "options": ["Python", "Java"]}],
@@ -98,7 +79,7 @@ def test_create_poll_returns_201(client):
 
 def test_get_poll_returns_404_for_unknown(client):
     response = client.get(
-        f"/api/v1/polls/{uuid.uuid4()}",
+        f"/api/v2/core/polls/{uuid.uuid4()}",
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )
     assert response.status_code == 404
@@ -106,7 +87,7 @@ def test_get_poll_returns_404_for_unknown(client):
 
 def test_put_poll_returns_409_when_not_draft(client):
     create_resp = client.post(
-        "/api/v1/polls/",
+        "/api/v2/core/polls/",
         json={
             "name": "Lock Test",
             "questions": [{"question": "Pick one?", "options": ["A", "B"]}],
@@ -115,12 +96,12 @@ def test_put_poll_returns_409_when_not_draft(client):
     )
     poll_id = create_resp.json()["id"]
     client.patch(
-        f"/api/v1/polls/{poll_id}/status",
+        f"/api/v2/core/polls/{poll_id}/status",
         json={"status": "active"},
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )
     put_resp = client.put(
-        f"/api/v1/polls/{poll_id}",
+        f"/api/v2/core/polls/{poll_id}",
         json={
             "name": "Hacked",
             "questions": [{"question": "New Q?", "options": ["X", "Y"]}],
@@ -133,7 +114,7 @@ def test_put_poll_returns_409_when_not_draft(client):
 
 def test_patch_poll_status(client):
     create_resp = client.post(
-        "/api/v1/polls/",
+        "/api/v2/core/polls/",
         json={
             "name": "Status Test",
             "questions": [{"question": "Pick one?", "options": ["A", "B"]}],
@@ -142,7 +123,7 @@ def test_patch_poll_status(client):
     )
     poll_id = create_resp.json()["id"]
     patch_resp = client.patch(
-        f"/api/v1/polls/{poll_id}/status",
+        f"/api/v2/core/polls/{poll_id}/status",
         json={"status": "active"},
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )
