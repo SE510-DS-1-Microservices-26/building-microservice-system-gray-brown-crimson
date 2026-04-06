@@ -37,7 +37,7 @@ class RabbitMQPublisher:
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
         await self._exchange.publish(message, routing_key=ROUTING_KEY)
-        logger.info("Published %s (poll_id=%s)", ROUTING_KEY, event.poll_id)
+        logger.info("Published %s (core_item_id=%s)", ROUTING_KEY, event.core_item_id)
 
     async def close(self) -> None:
         if self._connection and not self._connection.is_closed:

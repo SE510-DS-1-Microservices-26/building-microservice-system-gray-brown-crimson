@@ -60,6 +60,11 @@ class FakeUserServiceClient:
         return {"id": user_id}
 
 
+class FakeOutboxRepository:
+    def save(self, event) -> None:
+        pass
+
+
 USER_ID = str(uuid.uuid4())
 OTHER_USER_ID = str(uuid.uuid4())
 
@@ -68,7 +73,7 @@ def make_services() -> tuple[PollService, VoteService]:
     poll_repo = FakePollRepository()
     vote_repo = FakeVoteRepository()
     user_client = FakeUserServiceClient()
-    poll_service = PollService(poll_repo, user_client)
+    poll_service = PollService(poll_repo, user_client, FakeOutboxRepository())
     vote_service = VoteService(poll_service, vote_repo, user_client)
     return poll_service, vote_service
 

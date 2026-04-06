@@ -47,11 +47,16 @@ class FakeUserServiceClient:
         return {"id": user_id}
 
 
+class FakeOutboxRepository:
+    def save(self, event) -> None:
+        pass
+
+
 USER_ID = str(uuid.uuid4())
 
 
 def make_service() -> PollService:
-    return PollService(FakePollRepository(), FakeUserServiceClient())
+    return PollService(FakePollRepository(), FakeUserServiceClient(), FakeOutboxRepository())
 
 
 def create_dto(name: str = "Test Poll") -> CreatePollDto:

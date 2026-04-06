@@ -1,5 +1,6 @@
 import uuid
 import pytest
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
 from src.core_service.app.api.main import app
@@ -55,16 +56,30 @@ class FakeUserServiceClient:
         return {"id": user_id}
 
 
+class FakeOutboxRepository:
+    def save(self, event) -> None:
+        pass
+
+
 @pytest.fixture
 def client():
     poll_repo = FakePollRepository()
     vote_repo = FakeVoteRepository()
-    poll_service = PollService(poll_repo, FakeUserServiceClient())
+    user_client = FakeUserServiceClient()
+    outbox_repo = FakeOutboxRepository()
+    poll_service = PollService(poll_repo, user_client, outbox_repo)
     app.dependency_overrides[get_poll_service] = lambda: poll_service
     app.dependency_overrides[get_vote_service] = lambda: VoteService(
-        poll_service, vote_repo
+        poll_service, vote_repo, user_client
     )
-    yield TestClient(app)
+    with patch(
+        "src.core_service.app.api.main.RabbitMQPublisher", autospec=True
+    ) as MockPublisher, patch(
+        "src.core_service.app.api.main.run_outbox_relay", new_callable=AsyncMock
+    ):
+        MockPublisher.return_value.connect = AsyncMock()
+        MockPublisher.return_value.close = AsyncMock()
+        yield TestClient(app)
     app.dependency_overrides.clear()
 
 
