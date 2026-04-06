@@ -1,5 +1,5 @@
 services:
-  db:
+  db_core:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: polling
@@ -13,12 +13,47 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
-    ports:
-      - "8080:8080"
+  db_users:
+    image: postgres:16-alpine
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/polling
+      POSTGRES_DB: users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  core_service:
+    build:
+      context: .
+      dockerfile: src/core_service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db_core:5432/polling
+      USERS_SERVICE_URL: http://users_service:8001/api/v2/users
     depends_on:
-      db:
+      db_core:
         condition: service_healthy
+
+  users_service:
+    build:
+      context: .
+      dockerfile: src/users_service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db_users:5432/users
+    depends_on:
+      db_users:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - core_service
+      - users_service
