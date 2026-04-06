@@ -25,8 +25,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(polls.router)
-app.include_router(votes.router)
+app.include_router(polls.router, prefix="/api/v2/core")
+app.include_router(votes.router, prefix="/api/v2/core")
 
 
 @app.exception_handler(PollNotFoundException)
@@ -55,11 +55,6 @@ async def user_not_found_handler(_: Request, exc: UserNotFoundException):
         status_code=status.HTTP_404_NOT_FOUND,
         content={"error": "Not Found", "user_id": exc.user_id},
     )
-
-
-@app.get("/api/v2/core/")
-def read_root():
-    return {"Hello": "World"}
 
 
 @app.get("/api/v2/core/health")

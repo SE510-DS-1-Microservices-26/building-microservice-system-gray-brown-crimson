@@ -7,6 +7,7 @@ from src.core_service.app.core.application.protocol import (
     VoteRepositoryProtocol,
     UserServiceProtocol,
 )
+from src.core_service.app.core.exception import UserNotFoundException
 
 
 class VoteService:

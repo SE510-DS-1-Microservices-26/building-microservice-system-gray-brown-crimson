@@ -21,12 +21,18 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(users.router)
+app.include_router(users.router, prefix="/api/v2/users")
 
 
-@app.get("/api/v2/users")
-def read_root():
-    return {"Hello": "World"}
+@app.exception_handler(UserNotFoundException)
+async def user_not_found_handler(_: Request, exc: UserNotFoundException):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={
+            "error": "Not Found",
+            "user_id": exc.user_id,
+        },
+    )
 
 
 @app.get("/api/v2/users/health")

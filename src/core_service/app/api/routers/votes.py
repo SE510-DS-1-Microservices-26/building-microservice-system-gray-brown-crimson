@@ -5,7 +5,7 @@ from src.core_service.app.core.application import VoteService
 from src.core_service.app.core.dto import CreateVoteDto
 
 
-router = APIRouter(prefix="/api/v2/core/votes", tags=["votes"])
+router = APIRouter(prefix="/votes", tags=["votes"])
 
 
 @router.get("/{poll_id}")

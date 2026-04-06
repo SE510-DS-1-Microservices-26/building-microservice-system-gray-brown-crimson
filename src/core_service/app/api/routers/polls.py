@@ -5,7 +5,7 @@ from src.core_service.app.core.application import PollService
 from src.core_service.app.core.dto import CreatePollDto, UpdatePollStatusDto
 
 
-router = APIRouter(prefix="/api/v2/core/polls", tags=["polls"])
+router = APIRouter(prefix="/polls", tags=["polls"])
 
 
 @router.get("/{poll_id}")

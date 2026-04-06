@@ -3,6 +3,6 @@ from .vote_repository import VoteRepository
 
 
 __all__ = [
-    "PollRepositoryProtocol",
-    "VoteRepositoryProtocol",
+    "PollRepository",
+    "VoteRepository",
 ]

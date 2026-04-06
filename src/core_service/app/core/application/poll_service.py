@@ -82,6 +82,3 @@ class PollService:
             logger.warning(f"Poll retrieval failed. ID {poll_id} not found in data.")
             raise PollNotFoundException(poll_id)
         return poll
-
-    def _is_poll_exists(self, poll_id: str) -> bool:
-        return self._repository.exists_by_id(uuid.UUID(poll_id))
