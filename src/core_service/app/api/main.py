@@ -8,6 +8,7 @@ from src.core_service.app.core.exception import (
     PollNotFoundException,
     PollNotEditableException,
     UserNotFoundException,
+    UsersServiceUnavailableException,
 )
 from src.core_service.app.core.logger import setup_logging
 
@@ -52,8 +53,16 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
 @app.exception_handler(UserNotFoundException)
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content={"error": "Not Found", "user_id": exc.user_id},
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"error": "Bad Request", "detail": f"User '{exc.user_id}' does not exist."},
+    )
+
+
+@app.exception_handler(UsersServiceUnavailableException)
+async def users_service_unavailable_handler(_: Request, __: UsersServiceUnavailableException):
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"error": "Service Unavailable", "detail": "Users service is unreachable."},
     )
 
 
