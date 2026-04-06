@@ -7,4 +7,3 @@ class UserDto(BaseModel):
     firstname: str
     lastname: str
     email: str
-    

@@ -32,6 +32,7 @@ class QuestionModel(Base):
 
     poll: Mapped["PollModel"] = relationship(back_populates="questions")
 
+
 class VoteModel(Base):
     __tablename__ = "votes"
 

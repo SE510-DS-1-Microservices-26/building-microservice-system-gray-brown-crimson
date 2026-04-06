@@ -4,9 +4,4 @@ from .question import Question
 from .vote import Vote
 
 
-__all__ = [
-    "Poll",
-    "PollStatus",
-    "Question",
-    "Vote"    
-]
+__all__ = ["Poll", "PollStatus", "Question", "Vote"]
