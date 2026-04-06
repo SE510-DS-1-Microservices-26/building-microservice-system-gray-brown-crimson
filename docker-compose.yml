@@ -27,6 +27,17 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   core_service:
     build:
       context: .
@@ -34,8 +45,11 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db_core:5432/polling
       USERS_SERVICE_URL: http://users_service:8001/api/v2/users
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
       db_core:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   users_service:

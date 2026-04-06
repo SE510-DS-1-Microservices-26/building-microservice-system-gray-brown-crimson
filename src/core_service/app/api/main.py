@@ -10,17 +10,24 @@ from src.core_service.app.core.exception import (
     UserNotFoundException,
     UsersServiceUnavailableException,
 )
+from src.core_service.app.core.infrastructure import RabbitMQPublisher
 from src.core_service.app.core.logger import setup_logging
+from src.core_service.app.shared import settings
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     setup_logging()
     logger = logging.getLogger("app.main")
     logger.info("Core Service API is initiating...")
 
+    publisher = RabbitMQPublisher(settings.rabbitmq_url)
+    await publisher.connect()
+    app.state.rabbitmq_publisher = publisher
+
     yield
 
+    await publisher.close()
     logger.info("Application is shutting down. Releasing resources...")
 
 

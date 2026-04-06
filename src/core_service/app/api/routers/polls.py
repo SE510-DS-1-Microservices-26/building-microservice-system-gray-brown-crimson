@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Depends, status
 
-from src.core_service.app.api.dependencies import get_poll_service, get_current_user_id
+from src.core_service.app.api.dependencies import (
+    get_current_user_id,
+    get_poll_service,
+    get_rabbitmq_publisher,
+)
 from src.core_service.app.core.application import PollService
 from src.core_service.app.core.dto import CreatePollDto, UpdatePollStatusDto
+from src.core_service.app.core.events import CoreItemCreatedEvent
+from src.core_service.app.core.infrastructure import RabbitMQPublisher
 
 
 router = APIRouter(prefix="/polls", tags=["polls"])
@@ -18,12 +24,21 @@ def get_poll_by_id(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_poll(
+async def create_poll(
     dto: CreatePollDto,
     user_id: str = Depends(get_current_user_id),
     service: PollService = Depends(get_poll_service),
+    publisher: RabbitMQPublisher = Depends(get_rabbitmq_publisher),
 ):
-    return service.add_new_poll(user_id, dto)
+    result = service.add_new_poll(user_id, dto)
+    await publisher.publish(
+        CoreItemCreatedEvent(
+            core_item_id=result.id,
+            owner_user_id=user_id,
+            summary=result.name,
+        )
+    )
+    return result
 
 
 @router.patch("/{poll_id}/status")

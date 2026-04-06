@@ -1,10 +1,14 @@
 from typing import Generator
 
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from sqlalchemy.orm import Session
 
 from src.core_service.app.core.application import PollService, VoteService
-from src.core_service.app.core.infrastructure import SessionLocal, UserServiceClient
+from src.core_service.app.core.infrastructure import (
+    RabbitMQPublisher,
+    SessionLocal,
+    UserServiceClient,
+)
 from src.core_service.app.core.infrastructure.repository import (
     PollRepository,
     VoteRepository,
@@ -37,6 +41,10 @@ def get_vote_service(
     user_client: UserServiceClient = Depends(get_user_service_client),
 ) -> VoteService:
     return VoteService(poll_service, VoteRepository(db), user_client)
+
+
+def get_rabbitmq_publisher(request: Request) -> RabbitMQPublisher:
+    return request.app.state.rabbitmq_publisher
 
 
 def get_current_user_id(
