@@ -8,4 +8,3 @@ class Answer:
     vote_id: UUID
     question_id: UUID
     selected_option: str
-    

@@ -3,8 +3,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from src.core_service.app.core.domain import User
-from .....core_service.app.core.infrastructure.models import UserModel
+from src.users_service.app.core.domain import User
+from src.users_service.app.core.infrastructure.models import UserModel
 
 
 class UserRepository:

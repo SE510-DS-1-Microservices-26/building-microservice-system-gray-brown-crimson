@@ -10,6 +10,7 @@ def now_factory():
 @dataclass
 class Question:
     """Question Domain Class"""
+
     id: UUID
     poll_id: UUID
     question: str

@@ -41,17 +41,29 @@ class FakeVoteRepository:
         self._store.append(vote)
         return vote
 
-    def find_by_poll_and_user(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> list[Vote]:
+    def find_by_poll_and_user(
+        self, poll_id: uuid.UUID, user_id: uuid.UUID
+    ) -> list[Vote]:
         return [v for v in self._store if v.poll_id == poll_id and v.user_id == user_id]
+
+
+class FakeUserServiceClient:
+    def user_exists(self, user_id: str) -> bool:
+        return True
+
+    def get_user(self, user_id: str) -> dict:
+        return {"id": user_id}
 
 
 @pytest.fixture
 def client():
     poll_repo = FakePollRepository()
     vote_repo = FakeVoteRepository()
-    poll_service = PollService(poll_repo)
+    poll_service = PollService(poll_repo, FakeUserServiceClient())
     app.dependency_overrides[get_poll_service] = lambda: poll_service
-    app.dependency_overrides[get_vote_service] = lambda: VoteService(poll_service, vote_repo)
+    app.dependency_overrides[get_vote_service] = lambda: VoteService(
+        poll_service, vote_repo
+    )
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -67,7 +79,9 @@ def test_create_poll_returns_201(client):
         "/api/v2/core/polls/",
         json={
             "name": "Favourite Language",
-            "questions": [{"question": "Best language?", "options": ["Python", "Java"]}],
+            "questions": [
+                {"question": "Best language?", "options": ["Python", "Java"]}
+            ],
         },
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )

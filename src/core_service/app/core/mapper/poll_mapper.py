@@ -10,10 +10,7 @@ class PollMapper:
         poll_id = uuid.uuid4()
         domain_questions = [
             Question(
-                id=uuid.uuid4(),
-                poll_id=poll_id,
-                question=q.question,
-                options=q.options
+                id=uuid.uuid4(), poll_id=poll_id, question=q.question, options=q.options
             )
             for q in dto.questions
         ]
@@ -22,9 +19,9 @@ class PollMapper:
             id=poll_id,
             name=dto.name,
             user_id=uuid.UUID(user_id),
-            questions=domain_questions
+            questions=domain_questions,
         )
-        
+
     @staticmethod
     def to_dto(domain: Poll) -> PollDto:
         return PollDto(
@@ -32,11 +29,7 @@ class PollMapper:
             name=domain.name,
             status=domain.status,
             questions=[
-                QuestionDto(
-                    id=q.id,
-                    question=q.question,
-                    options=q.options
-                )
+                QuestionDto(id=q.id, question=q.question, options=q.options)
                 for q in domain.questions
-            ]
+            ],
         )

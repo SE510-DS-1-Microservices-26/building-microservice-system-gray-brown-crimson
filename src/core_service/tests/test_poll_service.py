@@ -7,8 +7,12 @@ from src.core_service.app.core.domain.poll_status import PollStatus
 from src.core_service.app.core.dto.create_poll_dto import CreatePollDto
 from src.core_service.app.core.dto.create_question_dto import CreateQuestionDto
 from src.core_service.app.core.dto.update_poll_status_dto import UpdatePollStatusDto
-from src.core_service.app.core.exception.poll_not_found_exception import PollNotFoundException
-from src.core_service.app.core.exception.poll_not_editable_exception import PollNotEditableException
+from src.core_service.app.core.exception.poll_not_found_exception import (
+    PollNotFoundException,
+)
+from src.core_service.app.core.exception.poll_not_editable_exception import (
+    PollNotEditableException,
+)
 
 
 class FakePollRepository:
@@ -35,17 +39,25 @@ class FakePollRepository:
         return poll_id in self._store
 
 
+class FakeUserServiceClient:
+    def user_exists(self, user_id: str) -> bool:
+        return True
+
+    def get_user(self, user_id: str) -> dict:
+        return {"id": user_id}
+
+
 USER_ID = str(uuid.uuid4())
 
 
 def make_service() -> PollService:
-    return PollService(FakePollRepository())
+    return PollService(FakePollRepository(), FakeUserServiceClient())
 
 
 def create_dto(name: str = "Test Poll") -> CreatePollDto:
     return CreatePollDto(
         name=name,
-        questions=[CreateQuestionDto(question="Best colour?", options=["Red", "Blue"])]
+        questions=[CreateQuestionDto(question="Best colour?", options=["Red", "Blue"])],
     )
 
 
@@ -89,8 +101,12 @@ def test_update_poll_allowed_in_draft():
     service = make_service()
     poll_dto = service.add_new_poll(USER_ID, create_dto("Original"))
     updated = service.update_poll(
-        poll_dto.id, USER_ID,
-        CreatePollDto(name="Updated", questions=[CreateQuestionDto(question="New Q?", options=["X", "Y"])])
+        poll_dto.id,
+        USER_ID,
+        CreatePollDto(
+            name="Updated",
+            questions=[CreateQuestionDto(question="New Q?", options=["X", "Y"])],
+        ),
     )
     assert updated.name == "Updated"
     assert len(updated.questions) == 1
@@ -99,21 +115,35 @@ def test_update_poll_allowed_in_draft():
 def test_update_poll_raises_when_active():
     service = make_service()
     poll_dto = service.add_new_poll(USER_ID, create_dto())
-    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE))
+    service.update_poll_status(
+        poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE)
+    )
     with pytest.raises(PollNotEditableException):
         service.update_poll(
-            poll_dto.id, USER_ID,
-            CreatePollDto(name="Hack", questions=[CreateQuestionDto(question="Q?", options=["A", "B"])])
+            poll_dto.id,
+            USER_ID,
+            CreatePollDto(
+                name="Hack",
+                questions=[CreateQuestionDto(question="Q?", options=["A", "B"])],
+            ),
         )
 
 
 def test_update_poll_raises_when_completed():
     service = make_service()
     poll_dto = service.add_new_poll(USER_ID, create_dto())
-    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE))
-    service.update_poll_status(poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.COMPLETED))
+    service.update_poll_status(
+        poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.ACTIVE)
+    )
+    service.update_poll_status(
+        poll_dto.id, USER_ID, UpdatePollStatusDto(status=PollStatus.COMPLETED)
+    )
     with pytest.raises(PollNotEditableException):
         service.update_poll(
-            poll_dto.id, USER_ID,
-            CreatePollDto(name="Hack", questions=[CreateQuestionDto(question="Q?", options=["A", "B"])])
+            poll_dto.id,
+            USER_ID,
+            CreatePollDto(
+                name="Hack",
+                questions=[CreateQuestionDto(question="Q?", options=["A", "B"])],
+            ),
         )

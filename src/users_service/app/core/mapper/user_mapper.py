@@ -12,9 +12,9 @@ class UserMapper:
             username=dto.username,
             firstname=dto.firstname,
             lastname=dto.lastname,
-            email=dto.email
+            email=dto.email,
         )
-        
+
     @staticmethod
     def to_dto(domain: User) -> UserDto:
         return UserDto(
@@ -22,5 +22,5 @@ class UserMapper:
             username=domain.username,
             firstname=domain.firstname,
             lastname=domain.lastname,
-            email=domain.email
+            email=domain.email,
         )

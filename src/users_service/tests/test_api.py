@@ -2,7 +2,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from src.core_service.app.api.main import app
+from src.users_service.app.api.main import app
 from src.users_service.app.api.dependencies import get_user_service
 from src.users_service.app.core.application.user_service import UserService
 from src.users_service.app.core.domain.user import User

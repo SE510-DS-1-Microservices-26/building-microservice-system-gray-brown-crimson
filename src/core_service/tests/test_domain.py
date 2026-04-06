@@ -13,11 +13,17 @@ def make_poll(**kwargs) -> Poll:
 
 
 def make_question(**kwargs) -> Question:
-    defaults = dict(id=uuid.uuid4(), poll_id=uuid.uuid4(), question="Favourite colour?", options=["Red", "Blue"])
+    defaults = dict(
+        id=uuid.uuid4(),
+        poll_id=uuid.uuid4(),
+        question="Favourite colour?",
+        options=["Red", "Blue"],
+    )
     return Question(**{**defaults, **kwargs})
 
 
 # --- Domain rule 1: Poll name cannot be empty ---
+
 
 def test_poll_name_cannot_be_empty():
     with pytest.raises(ValueError, match="Poll name cannot be empty"):
@@ -30,6 +36,7 @@ def test_poll_name_whitespace_only_is_rejected():
 
 
 # --- Domain rule 2: Status transitions are limited ---
+
 
 def test_poll_draft_can_transition_to_active():
     poll = make_poll()
@@ -60,6 +67,7 @@ def test_poll_completed_cannot_transition_anywhere():
 
 # --- Domain rule 3: Question requires at least 2 options ---
 
+
 def test_question_requires_at_least_two_options():
     with pytest.raises(ValueError, match="at least 2 options"):
         make_question(options=["Only one"])
@@ -72,6 +80,7 @@ def test_question_text_cannot_be_empty():
 
 # --- Domain rule 4: Questions cannot be added to non-DRAFT polls ---
 
+
 def test_cannot_add_question_to_active_poll():
     poll = make_poll()
     poll.change_status(PollStatus.ACTIVE)
@@ -82,11 +91,24 @@ def test_cannot_add_question_to_active_poll():
 
 # --- Domain rule 5: User email must be valid ---
 
+
 def test_user_email_must_contain_at_sign():
     with pytest.raises(ValueError, match="Email must be valid"):
-        User(id=uuid.uuid4(), username="bob", firstname="Bob", lastname="Smith", email="notanemail")
+        User(
+            id=uuid.uuid4(),
+            username="bob",
+            firstname="Bob",
+            lastname="Smith",
+            email="notanemail",
+        )
 
 
 def test_user_username_cannot_be_empty():
     with pytest.raises(ValueError, match="Username cannot be empty"):
-        User(id=uuid.uuid4(), username="", firstname="Bob", lastname="Smith", email="bob@example.com")
+        User(
+            id=uuid.uuid4(),
+            username="",
+            firstname="Bob",
+            lastname="Smith",
+            email="bob@example.com",
+        )

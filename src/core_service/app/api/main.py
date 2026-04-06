@@ -4,7 +4,11 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from src.core_service.app.api.routers import votes, polls
-from src.core_service.app.core.exception import PollNotFoundException, PollNotEditableException, UserNotFoundException
+from src.core_service.app.core.exception import (
+    PollNotFoundException,
+    PollNotEditableException,
+    UserNotFoundException,
+)
 from src.core_service.app.core.logger import setup_logging
 
 
@@ -13,28 +17,26 @@ async def lifespan(_: FastAPI):
     setup_logging()
     logger = logging.getLogger("app.main")
     logger.info("Core Service API is initiating...")
-    
+
     yield
-    
+
     logger.info("Application is shutting down. Releasing resources...")
 
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(polls.router)
-app.include_router(votes.router)
+app.include_router(polls.router, prefix="/api/v2/core")
+app.include_router(votes.router, prefix="/api/v2/core")
 
 
 @app.exception_handler(PollNotFoundException)
 async def poll_not_found_handler(_: Request, exc: PollNotFoundException):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content={
-            "error": "Not Found",
-            "poll_id": exc.poll_id
-        }
+        content={"error": "Not Found", "poll_id": exc.poll_id},
     )
-    
+
+
 @app.exception_handler(PollNotEditableException)
 async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
     return JSONResponse(
@@ -43,7 +45,7 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
             "error": "Poll Not Editable",
             "poll_id": exc.poll_id,
             "current_status": exc.status,
-        }
+        },
     )
 
 
@@ -51,15 +53,9 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content={
-            "error": "Not Found",
-            "user_id": exc.user_id
-        }
+        content={"error": "Not Found", "user_id": exc.user_id},
     )
 
-@app.get("/api/v2/core/")
-def read_root():
-    return {"Hello": "World"}
 
 @app.get("/api/v2/core/health")
 def health_check():

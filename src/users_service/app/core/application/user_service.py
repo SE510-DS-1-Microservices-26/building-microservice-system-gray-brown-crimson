@@ -10,6 +10,7 @@ from src.users_service.app.core.exception import UserNotFoundException
 
 logger = logging.getLogger(__name__)
 
+
 class UserService:
     def __init__(self, repository: UserRepositoryProtocol):
         self._repository = repository

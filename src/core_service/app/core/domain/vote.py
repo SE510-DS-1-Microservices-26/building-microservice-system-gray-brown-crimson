@@ -14,6 +14,6 @@ class Vote:
     id: UUID
     poll_id: UUID
     user_id: UUID
-        
+
     answers: list[Answer] = field(default_factory=list)
     created_at: datetime = field(default_factory=now_factory)

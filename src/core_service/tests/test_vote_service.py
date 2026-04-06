@@ -9,7 +9,9 @@ from src.core_service.app.core.dto.create_answer_dto import CreateAnswerDto
 from src.core_service.app.core.dto.create_poll_dto import CreatePollDto
 from src.core_service.app.core.dto.create_question_dto import CreateQuestionDto
 from src.core_service.app.core.dto.create_vote_dto import CreateVoteDto
-from src.core_service.app.core.exception.poll_not_found_exception import PollNotFoundException
+from src.core_service.app.core.exception.poll_not_found_exception import (
+    PollNotFoundException,
+)
 
 
 class FakePollRepository:
@@ -44,8 +46,18 @@ class FakeVoteRepository:
         self._store.append(vote)
         return vote
 
-    def find_by_poll_and_user(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> list[Vote]:
+    def find_by_poll_and_user(
+        self, poll_id: uuid.UUID, user_id: uuid.UUID
+    ) -> list[Vote]:
         return [v for v in self._store if v.poll_id == poll_id and v.user_id == user_id]
+
+
+class FakeUserServiceClient:
+    def user_exists(self, user_id: str) -> bool:
+        return True
+
+    def get_user(self, user_id: str) -> dict:
+        return {"id": user_id}
 
 
 USER_ID = str(uuid.uuid4())
@@ -55,8 +67,9 @@ OTHER_USER_ID = str(uuid.uuid4())
 def make_services() -> tuple[PollService, VoteService]:
     poll_repo = FakePollRepository()
     vote_repo = FakeVoteRepository()
-    poll_service = PollService(poll_repo)
-    vote_service = VoteService(poll_service, vote_repo)
+    user_client = FakeUserServiceClient()
+    poll_service = PollService(poll_repo, user_client)
+    vote_service = VoteService(poll_service, vote_repo, user_client)
     return poll_service, vote_service
 
 

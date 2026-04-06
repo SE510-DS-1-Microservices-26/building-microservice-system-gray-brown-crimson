@@ -3,11 +3,20 @@ import uuid
 from src.core_service.app.core.dto import CreateVoteDto, VoteDto
 from src.core_service.app.core.mapper import VoteMapper
 from src.core_service.app.core.application.poll_service import PollService
-from src.core_service.app.core.application.protocol import VoteRepositoryProtocol, UserServiceProtocol
+from src.core_service.app.core.application.protocol import (
+    VoteRepositoryProtocol,
+    UserServiceProtocol,
+)
+from src.core_service.app.core.exception import UserNotFoundException
 
 
 class VoteService:
-    def __init__(self, poll_service: PollService, vote_repository: VoteRepositoryProtocol, user_client: UserServiceProtocol):
+    def __init__(
+        self,
+        poll_service: PollService,
+        vote_repository: VoteRepositoryProtocol,
+        user_client: UserServiceProtocol,
+    ):
         self.poll_service = poll_service
         self._vote_repository = vote_repository
         self._user_client = user_client
