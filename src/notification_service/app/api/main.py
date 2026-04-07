@@ -1,3 +1,4 @@
+import logging
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue
 from faststream.rabbit import ExchangeType
@@ -8,6 +9,8 @@ from src.notification_service.app.core.application.notification_service import N
 from src.notification_service.app.core.dto import CoreItemCreatedEventSchema
 from src.notification_service.app.shared.settings import settings
 
+
+logger = logging.getLogger(__name__)
 
 broker = RabbitBroker(settings.rabbitmq_url)
 app = FastStream(broker)
@@ -23,7 +26,18 @@ async def handle(msg: CoreItemCreatedEventSchema):
         repository = NotificationRepository(session)
         service = NotificationService(repository)
         service.save_notification(msg)
-    except:
+        logger.info(
+            "Notification processed: event_id=%s, core_item_id=%s",
+            msg.event_id,
+            msg.core_item_id,
+        )
+    except Exception as exc:
+        logger.error(
+            "Error processing notification: event_id=%s, error=%s",
+            msg.event_id,
+            exc,
+            exc_info=True,
+        )
         session.rollback()
         raise
     finally:

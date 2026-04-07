@@ -1,5 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from src.notification_service.app.core.domain import Notification
 
 from ..models import CoreItemCreatedEventModel
@@ -10,15 +11,9 @@ class NotificationRepository:
         self._session = session
 
     def save(self, notification: Notification) -> Notification:
-        existing = self._session.get(CoreItemCreatedEventModel, notification.event_id)
-        if existing:
-            existing.occurred_at = notification.occurred_at
-            existing.correlation_id = notification.correlation_id
-            existing.core_item_id = notification.core_item_id
-            existing.owner_user_id = notification.owner_user_id
-            existing.summary = notification.summary
-        else:
-            row = CoreItemCreatedEventModel(
+        stmt = (
+            pg_insert(CoreItemCreatedEventModel)
+            .values(
                 event_id=notification.event_id,
                 occurred_at=notification.occurred_at,
                 correlation_id=notification.correlation_id,
@@ -26,7 +21,11 @@ class NotificationRepository:
                 owner_user_id=notification.owner_user_id,
                 summary=notification.summary,
             )
-            self._session.add(row)
+            .on_conflict_do_nothing(index_elements=['event_id'])
+        )
+        self._session.execute(stmt)
+        self._session.commit()
+        return notification
         self._session.commit()
         return notification
 
