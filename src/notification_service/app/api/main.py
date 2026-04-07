@@ -1,5 +1,6 @@
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker
+from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue
+from faststream.rabbit import ExchangeType
 
 from src.notification_service.app.core.infrastructure import SessionLocal
 from src.notification_service.app.core.infrastructure.repository import NotificationRepository
@@ -11,8 +12,11 @@ from src.notification_service.app.shared.settings import settings
 broker = RabbitBroker(settings.rabbitmq_url)
 app = FastStream(broker)
 
+core_exchange = RabbitExchange("core", type=ExchangeType.DIRECT, durable=True)
+notifications_queue = RabbitQueue("notifications.core-item.created", routing_key="core-item.created")
 
-@broker.subscriber("core-item.created")
+
+@broker.subscriber(notifications_queue, core_exchange)
 async def handle(msg: CoreItemCreatedEventSchema):
     session = SessionLocal()
     try:

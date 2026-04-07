@@ -15,10 +15,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
 COPY src/notification_service/alembic/ ./alembic/
-COPY alembic.ini ./
+COPY alembic_notification.ini ./
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
-CMD alembic upgrade head && uvicorn src.core_service.app.api.main:app --host 0.0.0.0 --port 8000
+CMD alembic upgrade head && uvicorn src.notification_service.app.api.main:app --host 0.0.0.0 --port 8000

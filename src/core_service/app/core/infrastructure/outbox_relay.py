@@ -3,9 +3,7 @@ import logging
 
 from src.core_service.app.core.events import CoreItemCreatedEvent
 from src.core_service.app.core.infrastructure.database import SessionLocal
-from src.core_service.app.core.infrastructure.rabbitmq_publisher import (
-    RabbitMQPublisher,
-)
+from src.core_service.app.core.infrastructure.messaging import RabbitMQPublisher
 from src.core_service.app.core.infrastructure.repository import OutboxRepository
 
 logger = logging.getLogger(__name__)
