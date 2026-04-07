@@ -15,7 +15,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
 COPY src/notification_service/alembic/ ./alembic/
-COPY alembic_notification.ini ./
+COPY alembic_notification.ini ./alembic.ini
 
 ENV PATH="/app/.venv/bin:$PATH"
 

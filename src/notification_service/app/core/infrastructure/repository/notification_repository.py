@@ -26,8 +26,6 @@ class NotificationRepository:
         self._session.execute(stmt)
         self._session.commit()
         return notification
-        self._session.commit()
-        return notification
 
     def find_by_id(self, event_id: UUID) -> Notification | None:
         row = self._session.get(CoreItemCreatedEventModel, event_id)

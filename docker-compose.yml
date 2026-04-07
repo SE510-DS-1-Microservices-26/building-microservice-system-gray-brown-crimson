@@ -82,6 +82,7 @@ services:
       dockerfile: src/notification_service/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db_notification:5432/notifications
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
       db_notification:
         condition: service_healthy
