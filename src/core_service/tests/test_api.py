@@ -72,10 +72,11 @@ def client():
     app.dependency_overrides[get_vote_service] = lambda: VoteService(
         poll_service, vote_repo, user_client
     )
-    with patch(
-        "src.core_service.app.api.main.RabbitMQPublisher", autospec=True
-    ) as MockPublisher, patch(
-        "src.core_service.app.api.main.run_outbox_relay", new_callable=AsyncMock
+    with (
+        patch(
+            "src.core_service.app.api.main.RabbitMQPublisher", autospec=True
+        ) as MockPublisher,
+        patch("src.core_service.app.api.main.run_outbox_relay", new_callable=AsyncMock),
     ):
         MockPublisher.return_value.connect = AsyncMock()
         MockPublisher.return_value.close = AsyncMock()
