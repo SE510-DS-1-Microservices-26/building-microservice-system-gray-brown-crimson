@@ -44,3 +44,17 @@ class VoteClientService(VoteServiceProtocol):
             httpx.HTTPStatusError,
         ) as exc:
             raise VoteServiceUnavailableException() from exc
+
+    async def cancel_vote(self, vote_id: str) -> None:
+        try:
+            response = await self.client.delete(
+                f"{self._base_url}/votes/{vote_id}/",
+                timeout=_TIMEOUT,
+            )
+            response.raise_for_status()
+        except (
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.HTTPStatusError,
+        ) as exc:
+            raise VoteServiceUnavailableException() from exc

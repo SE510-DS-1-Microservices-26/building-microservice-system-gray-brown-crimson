@@ -9,7 +9,7 @@ from src.workflow_service.app.core.application.protocol import (
 from src.workflow_service.app.core.domain import WorkflowState
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto, WorkflowDto
 from src.workflow_service.app.core.mapper import WorkflowMapper
-from src.workflow_service.app.core.exception import VoteServiceUnavailableException
+from src.workflow_service.app.core.exception import VoteServiceUnavailableException, VoteAlreadyExistsException, VoteSubmissionAlreadyInProgressException, PollServiceUnavailableException
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +37,13 @@ class VoteWorkflowService:
                 WorkflowState.VOTE_SAVED,
                 WorkflowState.PENDING,
             ]:
-                raise Exception("A vote submission is already in progress")
+                raise VoteSubmissionAlreadyInProgressException()
             if existing_workflow.state == WorkflowState.COMPLETED:
-                raise Exception("User has already voted")
+                raise VoteAlreadyExistsException(poll_id_str, user_id_str)
 
         has_voted = await self._vote_service.has_user_voted(poll_id_str, user_id_str)
         if has_voted:
-            raise Exception("User has already voted")
+            raise VoteAlreadyExistsException(poll_id_str, user_id_str)
 
         instance = WorkflowMapper.from_start_dto(dto)
         await self._workflow_repo.save(instance)
@@ -70,6 +70,16 @@ class VoteWorkflowService:
             await self._workflow_repo.save(instance)
         except (VoteServiceUnavailableException, httpx.TimeoutException) as e:
             logger.error(f"Service unavailable: {e}")
+            if instance.vote_id:
+                try:
+                    await self._vote_service.cancel_vote(instance.vote_id)
+                    logger.info(
+                        f"Vote {instance.vote_id} cancelled after service failure"
+                    )
+                except Exception as cancel_error:
+                    logger.error(
+                        f"Compensation failed: could not cancel vote {instance.vote_id}: {cancel_error}"
+                    )
             WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.FAILED)
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)

@@ -48,6 +48,10 @@ class VoteRepository:
         )
         return row is not None
 
+    def delete(self, vote_id: UUID) -> None:
+        self._session.query(VoteModel).filter(VoteModel.id == vote_id).delete()
+        self._session.commit()
+
     @staticmethod
     def _to_domain(row: VoteModel) -> Vote:
         vote = Vote(

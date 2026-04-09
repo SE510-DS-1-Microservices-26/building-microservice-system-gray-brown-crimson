@@ -43,3 +43,6 @@ class VoteService:
         return self._vote_repository.check_user_voted(
             uuid.UUID(poll_id), uuid.UUID(user_id)
         )
+
+    def cancel_vote(self, vote_id: str) -> None:
+        self._vote_repository.delete(uuid.UUID(vote_id))
