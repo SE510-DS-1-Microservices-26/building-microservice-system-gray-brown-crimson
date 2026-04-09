@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.core_service.app.core.events import CoreItemCreatedEvent
 from src.core_service.app.core.infrastructure.models import OutboxMessageModel
-from src.core_service.app.core.infrastructure.rabbitmq_publisher import (
+from src.core_service.app.core.infrastructure.messaging.rabbitmq_publisher import (
     EXCHANGE_NAME,
     ROUTING_KEY,
 )
