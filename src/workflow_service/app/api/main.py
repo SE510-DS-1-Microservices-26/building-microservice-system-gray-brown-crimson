@@ -7,13 +7,13 @@ from .router import router
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     http_client = httpx.AsyncClient(
         limits=httpx.Limits(max_keepalive_connections=50, max_connections=100)
     )
+    app.state.http_client = http_client
 
-    yield {"http_client": http_client}
-
+    yield
     await http_client.aclose()
 
 
