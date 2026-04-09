@@ -36,3 +36,9 @@ class VoteService:
         vote = VoteMapper.to_domain(dto, poll.id, user_id)
         self._vote_repository.save(vote)
         return VoteMapper.to_dto(vote)
+
+    def has_user_voted(self, poll_id: str, user_id: str) -> bool:
+        if not self._user_client.user_exists(user_id):
+            raise UserNotFoundException(user_id)
+        vote = self._vote_repository.find_by_poll_and_user(poll_id, user_id)
+        return vote is not None

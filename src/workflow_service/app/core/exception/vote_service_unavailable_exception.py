@@ -1,0 +1,2 @@
+class VoteServiceUnavailableException(Exception):
+    pass

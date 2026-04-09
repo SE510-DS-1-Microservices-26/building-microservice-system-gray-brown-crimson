@@ -1,0 +1,2 @@
+class PollServiceUnavailableException(Exception):
+    pass
