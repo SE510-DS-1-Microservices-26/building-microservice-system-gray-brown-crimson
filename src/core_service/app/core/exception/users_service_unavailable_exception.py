@@ -1,0 +1,2 @@
+class UsersServiceUnavailableException(Exception):
+    pass
