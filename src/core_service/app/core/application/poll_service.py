@@ -14,7 +14,7 @@ from src.core_service.app.core.application.protocol import (
     UserServiceProtocol,
 )
 from src.core_service.app.core.exception import UserNotFoundException
-from src.core_service.app.core.infrastructure.repository import OutboxRepository
+from src.core_service.app.core.application.protocol.outbox_repository_protocol import OutboxRepositoryProtocol
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class PollService:
         self,
         repository: PollRepositoryProtocol,
         user_client: UserServiceProtocol,
-        outbox_repo: OutboxRepository,
+        outbox_repo: OutboxRepositoryProtocol,
     ):
         self._repository = repository
         self._user_client = user_client

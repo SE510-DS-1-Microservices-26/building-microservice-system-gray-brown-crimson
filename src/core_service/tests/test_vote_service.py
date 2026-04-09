@@ -51,6 +51,9 @@ class FakeVoteRepository:
     ) -> list[Vote]:
         return [v for v in self._store if v.poll_id == poll_id and v.user_id == user_id]
 
+    def check_user_voted(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        return any(v.poll_id == poll_id and v.user_id == user_id for v in self._store)
+
 
 class FakeUserServiceClient:
     def user_exists(self, user_id: str) -> bool:

@@ -12,4 +12,3 @@ class WorkflowDto(BaseModel):
     last_error: str | None
     created_at: datetime
     updated_at: datetime
- 

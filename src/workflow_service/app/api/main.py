@@ -16,6 +16,7 @@ async def lifespan(_: FastAPI):
 
     await http_client.aclose()
 
+
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(router, prefix="/api/v2/workflows")

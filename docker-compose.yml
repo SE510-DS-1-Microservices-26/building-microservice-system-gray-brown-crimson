@@ -109,10 +109,10 @@ services:
       context: .
       dockerfile: src/workflow_service/Dockerfile
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db_workflow:5432/notifications
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db_workflow:5432/workflows
       RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
-      db_notification:
+      db_workflow:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy

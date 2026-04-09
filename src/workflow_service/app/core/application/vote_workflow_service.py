@@ -57,18 +57,18 @@ class VoteWorkflowService:
             ]
             vote_id = await self._vote_service.save_vote(poll_id_str, user_id_str, answers_dict)
             instance.vote_id = vote_id
-            WorkflowMapper.advance(instance, WorkflowState.VOTE_SAVED)
+            WorkflowMapper.advance(instance, state=WorkflowState.VOTE_SAVED)
             await self._workflow_repo.save(instance)
         except Exception as e:
             logger.error(f"Failed to save vote for poll {poll_id_str}: {e}")
-            WorkflowMapper.advance(instance, error=str(e))
+            WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.FAILED)
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
 
         return WorkflowMapper.to_dto(instance)
 
     async def get_workflow(self, workflow_id: str) -> WorkflowDto | None:
-        instance = self._workflow_repo.find_by_id(workflow_id)
+        instance = await self._workflow_repo.find_by_id(workflow_id)
         if not instance:
             return None
         return WorkflowMapper.to_dto(instance)

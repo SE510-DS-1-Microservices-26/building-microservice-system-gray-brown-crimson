@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from src.workflow_service.app.core.domain import WorkflowInstance, WorkflowType
+from src.workflow_service.app.core.domain import WorkflowInstance, WorkflowState, WorkflowType
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto, WorkflowDto
 
 
@@ -30,8 +30,12 @@ class WorkflowMapper:
     @staticmethod
     def advance(
         instance: WorkflowInstance,
+        state: WorkflowState | None = None,
         error: str | None = None,
     ) -> WorkflowInstance:
-        instance.last_error = error
+        if state is not None:
+            instance.state = state
+        if error is not None:
+            instance.last_error = error
         instance.updated_at = datetime.now(UTC)
         return instance

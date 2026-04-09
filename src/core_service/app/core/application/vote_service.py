@@ -40,5 +40,6 @@ class VoteService:
     def has_user_voted(self, poll_id: str, user_id: str) -> bool:
         if not self._user_client.user_exists(user_id):
             raise UserNotFoundException(user_id)
-        vote = self._vote_repository.find_by_poll_and_user(poll_id, user_id)
-        return vote is not None
+        return self._vote_repository.check_user_voted(
+            uuid.UUID(poll_id), uuid.UUID(user_id)
+        )

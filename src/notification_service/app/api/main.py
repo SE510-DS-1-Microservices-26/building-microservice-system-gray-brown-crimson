@@ -4,8 +4,12 @@ from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue
 from faststream.rabbit import ExchangeType
 
 from src.notification_service.app.core.infrastructure import SessionLocal
-from src.notification_service.app.core.infrastructure.repository import NotificationRepository
-from src.notification_service.app.core.application.notification_service import NotificationService
+from src.notification_service.app.core.infrastructure.repository import (
+    NotificationRepository,
+)
+from src.notification_service.app.core.application.notification_service import (
+    NotificationService,
+)
 from src.notification_service.app.core.dto import CoreItemCreatedEventSchema
 from src.notification_service.app.shared.settings import settings
 
@@ -16,7 +20,9 @@ broker = RabbitBroker(settings.rabbitmq_url)
 app = FastStream(broker)
 
 core_exchange = RabbitExchange("core", type=ExchangeType.DIRECT, durable=True)
-notifications_queue = RabbitQueue("notifications.core-item.created", routing_key="core-item.created")
+notifications_queue = RabbitQueue(
+    "notifications.core-item.created", routing_key="core-item.created"
+)
 
 
 @broker.subscriber(notifications_queue, core_exchange)

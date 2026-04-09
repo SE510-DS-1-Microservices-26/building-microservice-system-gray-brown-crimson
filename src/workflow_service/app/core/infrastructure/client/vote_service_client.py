@@ -11,8 +11,22 @@ class VoteService(VoteServiceProtocol):
         self._base_url = base_url
         self.client = client
 
-    async def check_user_sent(self, poll_id: str, user_id: str) -> bool:
-        pass
+    async def has_user_voted(self, poll_id: str, user_id: str) -> bool:
+        try:
+            response = await self.client.get(
+                f"{self._base_url}/polls/{poll_id}/votes/",
+                headers={"x-user-id": user_id},
+                timeout=_TIMEOUT,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["has_voted"]
+        except (
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.HTTPStatusError,
+        ) as exc:
+            raise VoteServiceUnavailableException() from exc
 
     async def save_vote(self, poll_id: str, user_id: str, answers: list[dict]) -> str:
         try:
@@ -20,10 +34,14 @@ class VoteService(VoteServiceProtocol):
                 f"{self._base_url}/polls/{poll_id}/votes/",
                 json={"answers": answers},
                 headers={"x-user-id": user_id},
-                timeout=_TIMEOUT
+                timeout=_TIMEOUT,
             )
             response.raise_for_status()
             data = response.json()
             return data["id"]
-        except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPStatusError) as exc:
+        except (
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.HTTPStatusError,
+        ) as exc:
             raise VoteServiceUnavailableException() from exc

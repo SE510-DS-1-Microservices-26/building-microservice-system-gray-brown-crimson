@@ -40,13 +40,13 @@ class VoteRepository:
         )
         return [self._to_domain(row) for row in rows]
 
-    def find_by_poll_and_user(self, poll_id: UUID, user_id: UUID) -> Vote | None:
+    def check_user_voted(self, poll_id: UUID, user_id: UUID) -> bool:
         row = (
             self._session.query(VoteModel)
             .filter(VoteModel.poll_id == poll_id, VoteModel.user_id == user_id)
             .first()
         )
-        return self._to_domain(row) if row else None
+        return row is not None
 
     @staticmethod
     def _to_domain(row: VoteModel) -> Vote:

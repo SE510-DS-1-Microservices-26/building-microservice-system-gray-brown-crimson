@@ -1,7 +1,9 @@
 import logging
 
 from uuid import UUID
-from src.notification_service.app.core.application.protocol import NotificationRepositoryProtocol
+from src.notification_service.app.core.application.protocol import (
+    NotificationRepositoryProtocol,
+)
 from src.notification_service.app.core.domain import Notification
 
 

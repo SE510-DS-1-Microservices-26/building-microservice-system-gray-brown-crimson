@@ -13,9 +13,15 @@ class PollService(PollServiceProtocol):
 
     async def is_active(self, poll_id: str) -> bool:
         try:
-            response = await self.client.get(f"{self._base_url}/{poll_id}", timeout=_TIMEOUT)
+            response = await self.client.get(
+                f"{self._base_url}/{poll_id}", timeout=_TIMEOUT
+            )
             response.raise_for_status()
 
             return response.json().get("status") == "active"
-        except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPStatusError) as exc:
+        except (
+            httpx.TimeoutException,
+            httpx.ConnectError,
+            httpx.HTTPStatusError,
+        ) as exc:
             raise PollServiceUnavailableException() from exc
