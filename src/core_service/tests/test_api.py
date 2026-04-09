@@ -7,6 +7,7 @@ from src.core_service.app.api.dependencies import get_poll_service, get_vote_ser
 from src.core_service.app.core.application import PollService, VoteService
 from src.core_service.app.core.domain.poll import Poll
 from src.core_service.app.core.domain.vote import Vote
+from src.core_service.app.core.exception import UsersServiceUnavailableException
 
 
 class FakePollRepository:
@@ -53,6 +54,14 @@ class FakeUserServiceClient:
 
     def get_user(self, user_id: str) -> dict:
         return {"id": user_id}
+
+
+class UnavailableUserServiceClient:
+    def user_exists(self, user_id: str) -> bool:
+        raise UsersServiceUnavailableException()
+
+    def get_user(self, user_id: str) -> dict:
+        raise UsersServiceUnavailableException()
 
 
 @pytest.fixture
@@ -143,3 +152,31 @@ def test_patch_poll_status(client):
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["status"] == "active"
+
+
+@pytest.fixture
+def unavailable_client():
+    poll_repo = FakePollRepository()
+    vote_repo = FakeVoteRepository()
+    poll_service = PollService(poll_repo, UnavailableUserServiceClient())
+    app.dependency_overrides[get_poll_service] = lambda: poll_service
+    app.dependency_overrides[get_vote_service] = lambda: VoteService(
+        poll_service, vote_repo
+    )
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_create_poll_returns_503_when_users_service_unavailable(unavailable_client):
+    response = unavailable_client.post(
+        "/api/v2/core/polls/",
+        json={
+            "name": "Unreachable Test",
+            "questions": [{"question": "Pick one?", "options": ["A", "B"]}],
+        },
+        headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
+    )
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"] == "Service Unavailable"
+    assert body["detail"] == "Users service is unreachable."

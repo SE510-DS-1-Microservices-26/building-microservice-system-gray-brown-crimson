@@ -53,8 +53,8 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
 @app.exception_handler(UserNotFoundException)
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"error": "Bad Request", "detail": f"User '{exc.user_id}' does not exist."},
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"error": "Not Found", "detail": f"User '{exc.user_id}' does not exist."},
     )
 
 
