@@ -14,7 +14,7 @@ class PollClientService(PollServiceProtocol):
     async def is_active(self, poll_id: str) -> bool:
         try:
             response = await self.client.get(
-                f"{self._base_url}/{poll_id}", timeout=_TIMEOUT
+                f"{self._base_url}/polls/{poll_id}", timeout=_TIMEOUT
             )
             response.raise_for_status()
 

@@ -19,13 +19,20 @@ from src.workflow_service.app.core.infrastructure.database import AsyncSessionLo
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 def get_vote_workflow_service(
     request: Request, session: AsyncSession = Depends(get_db_session)
 ) -> VoteWorkflowService:
-    shared_http_client = request.state.http_client
+    shared_http_client = request.app.state.http_client
 
     poll_client = PollClientService(
         base_url=os.getenv("POLL_SERVICE_URL", "http://core_service:8000/api/v2/core"),

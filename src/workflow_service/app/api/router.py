@@ -6,7 +6,7 @@ from src.workflow_service.app.core.application.vote_workflow_service import (
 )
 from src.workflow_service.app.api.dependencies import get_vote_workflow_service
 
-router = APIRouter(prefix="/workflows", tags=["workflows"])
+router = APIRouter(prefix="/", tags=["workflows"])
 
 
 @router.post("/vote", status_code=status.HTTP_201_CREATED, response_model=WorkflowDto)

@@ -19,6 +19,6 @@ COPY alembic_workflow.ini ./alembic.ini
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-EXPOSE 8000
+EXPOSE 8002
 
-CMD alembic upgrade head && uvicorn src.workflow_service.app.api.main:app --host 0.0.0.0 --port 8000
+CMD alembic upgrade head && uvicorn src.workflow_service.app.api.main:app --host 0.0.0.0 --port 8002

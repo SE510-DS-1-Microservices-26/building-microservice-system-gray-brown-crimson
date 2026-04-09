@@ -14,8 +14,7 @@ class VoteClientService(VoteServiceProtocol):
     async def has_user_voted(self, poll_id: str, user_id: str) -> bool:
         try:
             response = await self.client.get(
-                f"{self._base_url}/polls/{poll_id}/votes/",
-                headers={"x-user-id": user_id},
+                f"{self._base_url}/votes/{poll_id}/",
                 timeout=_TIMEOUT,
             )
             response.raise_for_status()

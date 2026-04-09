@@ -30,7 +30,7 @@ def add_vote(
 @router.get("/{poll_id}/user/{user_id}")
 def has_user_voted(
     poll_id: str,
-    user_id: str,
+    user_id: str = Depends(get_current_user_id),
     service: VoteService = Depends(get_vote_service),
 ):
     return service.has_user_voted(poll_id, user_id)

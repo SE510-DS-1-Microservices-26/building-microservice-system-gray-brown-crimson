@@ -14,7 +14,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 database_url = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/workflows"
+    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5435/workflows"
 )
 config.set_main_option("sqlalchemy.url", database_url)
 
