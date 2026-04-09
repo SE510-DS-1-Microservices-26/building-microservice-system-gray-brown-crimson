@@ -13,13 +13,17 @@ class UserServiceClient(UserServiceProtocol):
     def user_exists(self, user_id: str) -> bool:
         try:
             response = httpx.get(f"{self._base_url}/{user_id}", timeout=_TIMEOUT)
-            return response.status_code == 200
-        except (httpx.TimeoutException, httpx.ConnectError) as exc:
+            if response.status_code == 200:
+                return True
+            if response.status_code == 404:
+                return False
+            raise UsersServiceUnavailableException()
+        except httpx.RequestError as exc:
             raise UsersServiceUnavailableException() from exc
 
     def get_user(self, user_id: str) -> dict:
         try:
             response = httpx.get(f"{self._base_url}/{user_id}", timeout=_TIMEOUT)
             return response.json()
-        except (httpx.TimeoutException, httpx.ConnectError) as exc:
+        except httpx.RequestError as exc:
             raise UsersServiceUnavailableException() from exc

@@ -29,6 +29,7 @@ class OutboxRepository:
             created_at=datetime.utcnow(),
         )
         self._session.add(row)
+        self._session.commit()
 
     def find_pending(self) -> list[OutboxMessageModel]:
         return (
