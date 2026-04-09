@@ -21,6 +21,12 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+@app.get("/api/v2/users/health")
+def health_check():
+    return {"status": "ok"}
+
+
 app.include_router(users.router, prefix="/api/v2/users")
 
 
@@ -33,8 +39,3 @@ async def user_not_found_handler(_: Request, exc: UserNotFoundException):
             "user_id": exc.user_id,
         },
     )
-
-
-@app.get("/api/v2/users/health")
-def health_check():
-    return {"status": "ok"}
