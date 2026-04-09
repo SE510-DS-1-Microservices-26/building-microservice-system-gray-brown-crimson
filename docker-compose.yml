@@ -27,6 +27,31 @@ services:
       timeout: 5s
       retries: 5
 
+  db_notification:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notifications
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   core_service:
     build:
       context: .
@@ -34,8 +59,11 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db_core:5432/polling
       USERS_SERVICE_URL: http://users_service:8001/api/v2/users
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
     depends_on:
       db_core:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   users_service:
@@ -46,6 +74,19 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db_users:5432/users
     depends_on:
       db_users:
+        condition: service_healthy
+
+  notification_service:
+    build:
+      context: .
+      dockerfile: src/notification_service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db_notification:5432/notifications
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq/
+    depends_on:
+      db_notification:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   nginx:

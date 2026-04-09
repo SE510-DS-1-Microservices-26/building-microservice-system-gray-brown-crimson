@@ -1,5 +1,7 @@
+import uuid
+from datetime import datetime
 from uuid import UUID
-from sqlalchemy import ForeignKey, String, ARRAY
+from sqlalchemy import ForeignKey, Index, String, Text, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -56,3 +58,19 @@ class AnswerModel(Base):
     selected_option: Mapped[str] = mapped_column(String(512), nullable=False)
 
     vote: Mapped["VoteModel"] = relationship(back_populates="answers")
+
+
+class OutboxMessageModel(Base):
+    __tablename__ = "outbox_messages"
+    __table_args__ = (Index("ix_outbox_messages_status", "status"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    event_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload: Mapped[str] = mapped_column(Text, nullable=False)
+    routing_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    exchange: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    created_at: Mapped[datetime] = mapped_column(
+        nullable=False, default=datetime.utcnow
+    )
+    published_at: Mapped[datetime | None] = mapped_column(nullable=True)

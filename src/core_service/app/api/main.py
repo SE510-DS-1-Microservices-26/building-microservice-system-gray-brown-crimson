@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
@@ -10,17 +11,32 @@ from src.core_service.app.core.exception import (
     UserNotFoundException,
     UsersServiceUnavailableException,
 )
+from src.core_service.app.core.infrastructure import RabbitMQPublisher
+from src.core_service.app.core.infrastructure.outbox_relay import run_outbox_relay
 from src.core_service.app.core.logger import setup_logging
+from src.core_service.app.shared import settings
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     setup_logging()
     logger = logging.getLogger("app.main")
     logger.info("Core Service API is initiating...")
 
+    publisher = RabbitMQPublisher(settings.rabbitmq_url)
+    await publisher.connect()
+    app.state.rabbitmq_publisher = publisher
+
+    relay_task = asyncio.create_task(run_outbox_relay(publisher))
+
     yield
 
+    relay_task.cancel()
+    try:
+        await relay_task
+    except asyncio.CancelledError:
+        pass
+    await publisher.close()
     logger.info("Application is shutting down. Releasing resources...")
 
 
@@ -54,15 +70,23 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content={"error": "Not Found", "detail": f"User '{exc.user_id}' does not exist."},
+        content={
+            "error": "Not Found",
+            "detail": f"User '{exc.user_id}' does not exist.",
+        },
     )
 
 
 @app.exception_handler(UsersServiceUnavailableException)
-async def users_service_unavailable_handler(_: Request, __: UsersServiceUnavailableException):
+async def users_service_unavailable_handler(
+    _: Request, __: UsersServiceUnavailableException
+):
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content={"error": "Service Unavailable", "detail": "Users service is unreachable."},
+        content={
+            "error": "Service Unavailable",
+            "detail": "Users service is unreachable.",
+        },
     )
 
 

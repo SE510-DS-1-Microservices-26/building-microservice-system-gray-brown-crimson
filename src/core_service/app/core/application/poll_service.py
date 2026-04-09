@@ -3,6 +3,7 @@ import uuid
 
 from src.core_service.app.core.domain import Poll, Question
 from src.core_service.app.core.dto import CreatePollDto, PollDto, UpdatePollStatusDto
+from src.core_service.app.core.events import CoreItemCreatedEvent
 from src.core_service.app.core.mapper import PollMapper
 from src.core_service.app.core.exception import (
     PollNotFoundException,
@@ -13,6 +14,7 @@ from src.core_service.app.core.application.protocol import (
     UserServiceProtocol,
 )
 from src.core_service.app.core.exception import UserNotFoundException
+from src.core_service.app.core.infrastructure.repository import OutboxRepository
 
 
 logger = logging.getLogger(__name__)
@@ -20,10 +22,14 @@ logger = logging.getLogger(__name__)
 
 class PollService:
     def __init__(
-        self, repository: PollRepositoryProtocol, user_client: UserServiceProtocol
+        self,
+        repository: PollRepositoryProtocol,
+        user_client: UserServiceProtocol,
+        outbox_repo: OutboxRepository,
     ):
         self._repository = repository
         self._user_client = user_client
+        self._outbox_repo = outbox_repo
 
     def get_poll(self, poll_id: str, user_id: str) -> PollDto:
         poll = self._find_poll_or_raise(poll_id, user_id)
@@ -34,6 +40,12 @@ class PollService:
             raise UserNotFoundException(user_id)
         poll = PollMapper.to_domain(dto, user_id)
         self._repository.save(poll)
+        event = CoreItemCreatedEvent(
+            core_item_id=str(poll.id),
+            owner_user_id=user_id,
+            summary=poll.name,
+        )
+        self._outbox_repo.save(event)
         return PollMapper.to_dto(poll)
 
     def update_poll(self, poll_id: str, user_id: str, dto: CreatePollDto) -> PollDto:

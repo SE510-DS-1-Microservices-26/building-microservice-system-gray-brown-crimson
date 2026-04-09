@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from src.core_service.app.core.application import PollService, VoteService
 from src.core_service.app.core.infrastructure import SessionLocal, UserServiceClient
 from src.core_service.app.core.infrastructure.repository import (
+    OutboxRepository,
     PollRepository,
     VoteRepository,
 )
@@ -28,7 +29,7 @@ def get_poll_service(
     db: Session = Depends(get_db),
     user_client: UserServiceClient = Depends(get_user_service_client),
 ) -> PollService:
-    return PollService(PollRepository(db), user_client)
+    return PollService(PollRepository(db), user_client, OutboxRepository(db))
 
 
 def get_vote_service(

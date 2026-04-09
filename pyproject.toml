@@ -4,13 +4,16 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
+    "aio-pika>=9.0.0",
     "alembic>=1.18.4",
     "email-validator>=2.3.0",
     "fastapi>=0.135.3",
+    "faststream[rabbit]>=0.6.7",
     "httpx>=0.28.1",
     "nanoid>=2.0.0",
     "psycopg[binary]>=3.3.3",
     "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
     "pytest>=9.0.2",
     "sqlalchemy>=2.0.48",
     "uvicorn>=0.42.0",
@@ -19,3 +22,8 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["src"]
 pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.9",
+]

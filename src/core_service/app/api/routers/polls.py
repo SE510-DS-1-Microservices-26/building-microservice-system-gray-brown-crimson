@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
-from src.core_service.app.api.dependencies import get_poll_service, get_current_user_id
+from src.core_service.app.api.dependencies import get_current_user_id, get_poll_service
 from src.core_service.app.core.application import PollService
 from src.core_service.app.core.dto import CreatePollDto, UpdatePollStatusDto
 
