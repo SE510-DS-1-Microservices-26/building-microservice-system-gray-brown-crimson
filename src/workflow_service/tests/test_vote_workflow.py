@@ -26,7 +26,9 @@ class FakeWorkflowRepository:
     async def find_by_id(self, workflow_id: str) -> WorkflowInstance | None:
         return self._store.get(workflow_id)
 
-    async def find_by_poll_and_user(self, poll_id: str, user_id: str) -> WorkflowInstance | None:
+    async def find_by_poll_and_user(
+        self, poll_id: str, user_id: str
+    ) -> WorkflowInstance | None:
         for wf in self._store.values():
             if wf.poll_id == poll_id and wf.user_id == user_id:
                 return wf

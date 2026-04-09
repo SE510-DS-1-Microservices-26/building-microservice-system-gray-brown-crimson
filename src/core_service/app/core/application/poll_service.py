@@ -14,7 +14,9 @@ from src.core_service.app.core.application.protocol import (
     UserServiceProtocol,
 )
 from src.core_service.app.core.exception import UserNotFoundException
-from src.core_service.app.core.application.protocol.outbox_repository_protocol import OutboxRepositoryProtocol
+from src.core_service.app.core.application.protocol.outbox_repository_protocol import (
+    OutboxRepositoryProtocol,
+)
 
 
 logger = logging.getLogger(__name__)

@@ -26,6 +26,7 @@ def add_vote(
 ):
     return service.add_vote(poll_id, user_id, payload)
 
+
 @router.get("/{poll_id}/user/{user_id}")
 def has_user_voted(
     poll_id: str,

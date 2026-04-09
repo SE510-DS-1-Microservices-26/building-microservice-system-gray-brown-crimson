@@ -1,10 +1,13 @@
 from datetime import datetime, UTC
-from src.workflow_service.app.core.domain import WorkflowInstance, WorkflowState, WorkflowType
+from src.workflow_service.app.core.domain import (
+    WorkflowInstance,
+    WorkflowState,
+    WorkflowType,
+)
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto, WorkflowDto
 
 
 class WorkflowMapper:
-
     @staticmethod
     def from_start_dto(dto: StartVoteWorkflowDto) -> WorkflowInstance:
         return WorkflowInstance(

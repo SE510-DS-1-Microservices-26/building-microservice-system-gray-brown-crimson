@@ -8,7 +8,8 @@ from src.workflow_service.app.core.application.vote_workflow_service import (
     VoteWorkflowService,
 )
 from src.workflow_service.app.core.infrastructure.client import (
-    PollClientService, VoteClientService
+    PollClientService,
+    VoteClientService,
 )
 from src.workflow_service.app.core.infrastructure.repository import (
     WorkflowRepository,

@@ -33,7 +33,10 @@ class VoteWorkflowService:
             poll_id_str, user_id_str
         )
         if existing_workflow:
-            if existing_workflow.state in [WorkflowState.VOTE_SAVED, WorkflowState.PENDING]:
+            if existing_workflow.state in [
+                WorkflowState.VOTE_SAVED,
+                WorkflowState.PENDING,
+            ]:
                 raise Exception("A vote submission is already in progress")
             if existing_workflow.state == WorkflowState.COMPLETED:
                 raise Exception("User has already voted")
@@ -50,14 +53,18 @@ class VoteWorkflowService:
             WorkflowMapper.advance(instance, error="Poll is not active")
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
-        
 
         try:
             answers_dict = [
-                {"question_id": str(ans.question_id), "selected_option": ans.selected_option}
+                {
+                    "question_id": str(ans.question_id),
+                    "selected_option": ans.selected_option,
+                }
                 for ans in dto.answers
             ]
-            vote_id = await self._vote_service.save_vote(poll_id_str, user_id_str, answers_dict)
+            vote_id = await self._vote_service.save_vote(
+                poll_id_str, user_id_str, answers_dict
+            )
             instance.vote_id = vote_id
             WorkflowMapper.advance(instance, state=WorkflowState.VOTE_SAVED)
             await self._workflow_repo.save(instance)
