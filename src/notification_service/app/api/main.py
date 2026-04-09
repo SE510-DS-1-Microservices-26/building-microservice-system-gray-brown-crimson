@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue
@@ -19,13 +20,23 @@ core_exchange = RabbitExchange("core", type=ExchangeType.DIRECT, durable=True)
 notifications_queue = RabbitQueue("notifications.core-item.created", routing_key="core-item.created")
 
 
-@broker.subscriber(notifications_queue, core_exchange)
-async def handle(msg: CoreItemCreatedEventSchema):
+def _save_notification_sync(msg: CoreItemCreatedEventSchema) -> None:
     session = SessionLocal()
     try:
         repository = NotificationRepository(session)
         service = NotificationService(repository)
         service.save_notification(msg)
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+@broker.subscriber(notifications_queue, core_exchange)
+async def handle(msg: CoreItemCreatedEventSchema):
+    try:
+        await asyncio.to_thread(_save_notification_sync, msg)
         logger.info(
             "Notification processed: event_id=%s, core_item_id=%s",
             msg.event_id,
@@ -38,7 +49,4 @@ async def handle(msg: CoreItemCreatedEventSchema):
             exc,
             exc_info=True,
         )
-        session.rollback()
         raise
-    finally:
-        session.close()
