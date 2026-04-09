@@ -24,7 +24,7 @@ class WorkflowRepository(WorkflowRepositoryProtocol):
             created_at=workflow.created_at,
             updated_at=workflow.updated_at,
         )
-        await self._session.merge(model)
+        self._session.merge(model)
         await self._session.flush()
         return workflow
 
