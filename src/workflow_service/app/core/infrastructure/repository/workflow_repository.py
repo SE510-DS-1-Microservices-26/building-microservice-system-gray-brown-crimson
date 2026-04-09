@@ -24,8 +24,10 @@ class WorkflowRepository(WorkflowRepositoryProtocol):
             created_at=workflow.created_at,
             updated_at=workflow.updated_at,
         )
-        self._session.merge(model)
+
+        await self._session.merge(model)
         await self._session.flush()
+
         return workflow
 
     async def find_by_id(self, workflow_id: str) -> WorkflowInstance | None:

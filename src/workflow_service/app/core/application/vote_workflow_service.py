@@ -1,4 +1,5 @@
 import logging
+import httpx
 
 from src.workflow_service.app.core.application.protocol import (
     PollServiceProtocol,
@@ -8,6 +9,7 @@ from src.workflow_service.app.core.application.protocol import (
 from src.workflow_service.app.core.domain import WorkflowState
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto, WorkflowDto
 from src.workflow_service.app.core.mapper import WorkflowMapper
+from src.workflow_service.app.core.exception import VoteServiceUnavailableException
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ class VoteWorkflowService:
             await self._workflow_repo.save(instance)
         except (VoteServiceUnavailableException, httpx.TimeoutException) as e:
             logger.error(f"Service unavailable: {e}")
-            WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.RETRY)
+            WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.FAILED)
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
         except Exception as e:

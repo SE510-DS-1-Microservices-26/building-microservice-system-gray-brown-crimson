@@ -6,7 +6,7 @@ from src.workflow_service.app.core.exception import VoteServiceUnavailableExcept
 _TIMEOUT = httpx.Timeout(5.0)
 
 
-class VoteService(VoteServiceProtocol):
+class VoteClientService(VoteServiceProtocol):
     def __init__(self, base_url: str, client: httpx.AsyncClient):
         self._base_url = base_url
         self.client = client

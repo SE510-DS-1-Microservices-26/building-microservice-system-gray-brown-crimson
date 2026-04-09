@@ -7,13 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.workflow_service.app.core.application.vote_workflow_service import (
     VoteWorkflowService,
 )
-from src.workflow_service.app.core.infrastructure.client.poll_service_client import (
-    PollService,
+from src.workflow_service.app.core.infrastructure.client import (
+    PollClientService, VoteClientService
 )
-from src.workflow_service.app.core.infrastructure.client.vote_service_client import (
-    VoteService,
-)
-from src.workflow_service.app.core.infrastructure.repository.workflow_repository import (
+from src.workflow_service.app.core.infrastructure.repository import (
     WorkflowRepository,
 )
 from src.workflow_service.app.core.infrastructure.database import AsyncSessionLocal
@@ -29,11 +26,11 @@ def get_vote_workflow_service(
 ) -> VoteWorkflowService:
     shared_http_client = request.state.http_client
 
-    poll_client = PollService(
+    poll_client = PollClientService(
         base_url=os.getenv("POLL_SERVICE_URL", "http://core_service:8000/api/v2/core"),
         client=shared_http_client,
     )
-    vote_client = VoteService(
+    vote_client = VoteClientService(
         base_url=os.getenv("VOTE_SERVICE_URL", "http://core_service:8000/api/v2/core"),
         client=shared_http_client,
     )
