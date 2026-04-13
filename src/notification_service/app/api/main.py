@@ -33,14 +33,16 @@ async def handle(msg: CoreItemCreatedEventSchema):
         service = NotificationService(repository)
         service.save_notification(msg)
         logger.info(
-            "Notification processed: event_id=%s, core_item_id=%s",
+            "Notification processed: event_id=%s core_item_id=%s correlation_id=%s",
             msg.event_id,
             msg.core_item_id,
+            msg.correlation_id,
         )
     except Exception as exc:
         logger.error(
-            "Error processing notification: event_id=%s, error=%s",
+            "Error processing notification: event_id=%s correlation_id=%s error=%s",
             msg.event_id,
+            msg.correlation_id,
             exc,
             exc_info=True,
         )

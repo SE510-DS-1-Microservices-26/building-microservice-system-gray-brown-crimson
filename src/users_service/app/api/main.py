@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from src.users_service.app.core.exception import UserNotFoundException
 from src.users_service.app.core.logger import setup_logging
 from src.users_service.app.api.routers import users
+from src.shared.correlation import CorrelationIdMiddleware
 
 
 @asynccontextmanager
@@ -20,6 +21,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(users.router, prefix="/api/v2/users")
 

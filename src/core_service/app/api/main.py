@@ -9,6 +9,7 @@ from src.core_service.app.core.exception import (
     PollNotFoundException,
     PollNotEditableException,
     UserNotFoundException,
+    UsersServiceTimeoutException,
     UsersServiceUnavailableException,
     VoteNotFoundException,
 )
@@ -16,6 +17,7 @@ from src.core_service.app.core.infrastructure import RabbitMQPublisher
 from src.core_service.app.core.infrastructure.outbox_relay import run_outbox_relay
 from src.core_service.app.core.logger import setup_logging
 from src.core_service.app.shared import settings
+from src.shared.correlation import CorrelationIdMiddleware
 
 
 @asynccontextmanager
@@ -42,6 +44,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(polls.router, prefix="/api/v2/core")
 app.include_router(votes.router, prefix="/api/v2/core")
@@ -95,6 +98,17 @@ async def users_service_unavailable_handler(
         content={
             "error": "Service Unavailable",
             "detail": "Users service is unreachable.",
+        },
+    )
+
+
+@app.exception_handler(UsersServiceTimeoutException)
+async def users_service_timeout_handler(_: Request, __: UsersServiceTimeoutException):
+    return JSONResponse(
+        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+        content={
+            "error": "Gateway Timeout",
+            "detail": "Users service did not respond in time.",
         },
     )
 

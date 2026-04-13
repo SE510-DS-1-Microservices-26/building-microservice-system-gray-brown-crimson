@@ -17,6 +17,7 @@ from src.core_service.app.core.exception import UserNotFoundException
 from src.core_service.app.core.application.protocol.outbox_repository_protocol import (
     OutboxRepositoryProtocol,
 )
+from src.shared.correlation import get_correlation_id
 
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ class PollService:
         poll = PollMapper.to_domain(dto, user_id)
         self._repository.save(poll)
         event = CoreItemCreatedEvent(
+            correlation_id=get_correlation_id(),
             core_item_id=str(poll.id),
             owner_user_id=user_id,
             summary=poll.name,
