@@ -16,6 +16,9 @@ if config.config_file_name is not None:
 database_url = os.getenv(
     "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5435/workflows"
 )
+# Alembic runs migrations with a synchronous engine; async driver URLs are converted.
+if "+asyncpg" in database_url:
+    database_url = database_url.replace("+asyncpg", "+psycopg", 1)
 config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata

@@ -48,6 +48,10 @@ class VoteRepository:
         )
         return row is not None
 
+    def find_by_id(self, vote_id: UUID) -> Vote | None:
+        row = self._session.query(VoteModel).filter(VoteModel.id == vote_id).first()
+        return self._to_domain(row) if row else None
+
     def delete(self, vote_id: UUID) -> None:
         self._session.query(VoteModel).filter(VoteModel.id == vote_id).delete()
         self._session.commit()

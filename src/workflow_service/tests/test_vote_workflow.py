@@ -65,13 +65,50 @@ async def test_vote_workflow_standard_flow():
 
     result = await service.start_vote_workflow(dto)
 
-    assert result.state == WorkflowState.VOTE_SAVED
+    assert result.state == WorkflowState.COMPLETED
     assert result.poll_id == str(poll_id)
     assert result.user_id == str(user_id)
 
 
 @pytest.mark.anyio
-async def test_vote_workflow_compensation_flow():
+async def test_vote_workflow_compensation_after_vote_when_poll_closes():
+    poll_client = Mock()
+    vote_client = Mock()
+    repo = FakeWorkflowRepository()
+
+    poll_client.is_active = AsyncMock(side_effect=[True, False])
+    vote_client.has_user_voted = AsyncMock(return_value=False)
+    saved_vote_id = str(uuid.uuid4())
+    vote_client.save_vote = AsyncMock(return_value=saved_vote_id)
+    vote_client.cancel_vote = AsyncMock()
+
+    service = VoteWorkflowService(
+        workflow_repo=repo,
+        poll_service=poll_client,
+        vote_service=vote_client,
+    )
+
+    poll_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+    question_id = uuid.uuid4()
+
+    dto = StartVoteWorkflowDto(
+        user_id=user_id,
+        poll_id=poll_id,
+        answers=[
+            AnswerWorkflowDto(question_id=question_id, selected_option="Option A")
+        ],
+    )
+
+    result = await service.start_vote_workflow(dto)
+
+    assert result.state == WorkflowState.FAILED
+    assert result.last_error == "Poll became inactive before workflow completed"
+    vote_client.cancel_vote.assert_awaited_once_with(saved_vote_id, str(user_id))
+
+
+@pytest.mark.anyio
+async def test_vote_workflow_save_failure_sets_failed():
     poll_client = Mock()
     vote_client = Mock()
     repo = FakeWorkflowRepository()
@@ -100,4 +137,5 @@ async def test_vote_workflow_compensation_flow():
 
     result = await service.start_vote_workflow(dto)
 
+    assert result.state == WorkflowState.FAILED
     assert result.last_error == "Vote Service down"
