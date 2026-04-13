@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, status, HTTPException
 
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto, WorkflowDto
@@ -6,7 +8,12 @@ from src.workflow_service.app.core.application.vote_workflow_service import (
 )
 from src.workflow_service.app.api.dependencies import get_vote_workflow_service
 
-router = APIRouter(prefix="/", tags=["workflows"])
+router = APIRouter(tags=["workflows"])
+
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 
 @router.post("/vote", status_code=status.HTTP_201_CREATED, response_model=WorkflowDto)
@@ -19,10 +26,10 @@ async def create_vote(
 
 @router.get("/{workflow_id}", response_model=WorkflowDto)
 async def get_workflow(
-    workflow_id: str,
+    workflow_id: uuid.UUID,
     service: VoteWorkflowService = Depends(get_vote_workflow_service),
 ):
-    workflow = await service.get_workflow(workflow_id)
+    workflow = await service.get_workflow(str(workflow_id))
     if not workflow:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Workflow not found"
