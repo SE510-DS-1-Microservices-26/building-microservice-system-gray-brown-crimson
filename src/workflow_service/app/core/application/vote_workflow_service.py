@@ -50,7 +50,9 @@ class VoteWorkflowService:
 
         is_active = await self._poll_service.is_active(poll_id_str)
         if not is_active:
-            WorkflowMapper.advance(instance, error="Poll is not active")
+            WorkflowMapper.advance(
+                instance, error="Poll is not active", state=WorkflowState.FAILED
+            )
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
 
@@ -68,18 +70,34 @@ class VoteWorkflowService:
             instance.vote_id = vote_id
             WorkflowMapper.advance(instance, state=WorkflowState.VOTE_SAVED)
             await self._workflow_repo.save(instance)
-        except (VoteServiceUnavailableException, httpx.TimeoutException) as e:
-            logger.error(f"Service unavailable: {e}")
-            if instance.vote_id:
+
+            still_active = await self._poll_service.is_active(poll_id_str)
+            if not still_active:
                 try:
-                    await self._vote_service.cancel_vote(instance.vote_id)
+                    await self._vote_service.cancel_vote(vote_id, user_id_str)
                     logger.info(
-                        f"Vote {instance.vote_id} cancelled after service failure"
+                        "Vote %s cancelled after poll became inactive post-save",
+                        vote_id,
                     )
                 except Exception as cancel_error:
                     logger.error(
-                        f"Compensation failed: could not cancel vote {instance.vote_id}: {cancel_error}"
+                        "Compensation failed: could not cancel vote %s: %s",
+                        vote_id,
+                        cancel_error,
                     )
+                WorkflowMapper.advance(
+                    instance,
+                    error="Poll became inactive before workflow completed",
+                    state=WorkflowState.FAILED,
+                )
+                await self._workflow_repo.save(instance)
+                return WorkflowMapper.to_dto(instance)
+
+            WorkflowMapper.advance(instance, state=WorkflowState.COMPLETED)
+            await self._workflow_repo.save(instance)
+            return WorkflowMapper.to_dto(instance)
+        except (VoteServiceUnavailableException, httpx.TimeoutException) as e:
+            logger.error(f"Service unavailable: {e}")
             WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.FAILED)
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
@@ -88,8 +106,6 @@ class VoteWorkflowService:
             WorkflowMapper.advance(instance, error=str(e), state=WorkflowState.FAILED)
             await self._workflow_repo.save(instance)
             return WorkflowMapper.to_dto(instance)
-
-        return WorkflowMapper.to_dto(instance)
 
     async def get_workflow(self, workflow_id: str) -> WorkflowDto | None:
         instance = await self._workflow_repo.find_by_id(workflow_id)

@@ -7,7 +7,7 @@ from src.core_service.app.core.application.protocol import (
     VoteRepositoryProtocol,
     UserServiceProtocol,
 )
-from src.core_service.app.core.exception import UserNotFoundException
+from src.core_service.app.core.exception import UserNotFoundException, VoteNotFoundException
 
 
 class VoteService:
@@ -44,5 +44,12 @@ class VoteService:
             uuid.UUID(poll_id), uuid.UUID(user_id)
         )
 
-    def cancel_vote(self, vote_id: str) -> None:
-        self._vote_repository.delete(uuid.UUID(vote_id))
+    def cancel_vote(self, vote_id: str, user_id: str) -> None:
+        if not self._user_client.user_exists(user_id):
+            raise UserNotFoundException(user_id)
+        uid = uuid.UUID(user_id)
+        vid = uuid.UUID(vote_id)
+        vote = self._vote_repository.find_by_id(vid)
+        if vote is None or vote.user_id != uid:
+            raise VoteNotFoundException(vote_id)
+        self._vote_repository.delete(vid)

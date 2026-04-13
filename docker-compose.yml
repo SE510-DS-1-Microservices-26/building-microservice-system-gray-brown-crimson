@@ -126,3 +126,4 @@ services:
     depends_on:
       - core_service
       - users_service
+      - workflow_service

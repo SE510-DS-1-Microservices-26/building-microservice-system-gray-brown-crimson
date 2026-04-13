@@ -12,6 +12,7 @@ from src.core_service.app.core.dto.create_vote_dto import CreateVoteDto
 from src.core_service.app.core.exception.poll_not_found_exception import (
     PollNotFoundException,
 )
+from src.core_service.app.core.exception import VoteNotFoundException
 
 
 class FakePollRepository:
@@ -53,6 +54,12 @@ class FakeVoteRepository:
 
     def check_user_voted(self, poll_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         return any(v.poll_id == poll_id and v.user_id == user_id for v in self._store)
+
+    def find_by_id(self, vote_id: uuid.UUID) -> Vote | None:
+        for v in self._store:
+            if v.id == vote_id:
+                return v
+        return None
 
     def delete(self, vote_id: uuid.UUID) -> None:
         self._store = [v for v in self._store if v.id != vote_id]
@@ -139,3 +146,19 @@ def test_multiple_votes_stored_independently():
     vote_service.add_vote(poll.id, USER_ID, vote_dto(poll))
     votes = vote_service.get_votes(poll.id, USER_ID)
     assert len(votes) == 2
+
+
+def test_cancel_vote_removes_vote_for_owner():
+    poll_service, vote_service = make_services()
+    poll = poll_service.add_new_poll(USER_ID, create_poll_dto())
+    created = vote_service.add_vote(poll.id, USER_ID, vote_dto(poll))
+    vote_service.cancel_vote(created.id, USER_ID)
+    assert vote_service.has_user_voted(poll.id, USER_ID) is False
+
+
+def test_cancel_vote_raises_for_wrong_user():
+    poll_service, vote_service = make_services()
+    poll = poll_service.add_new_poll(USER_ID, create_poll_dto())
+    created = vote_service.add_vote(poll.id, USER_ID, vote_dto(poll))
+    with pytest.raises(VoteNotFoundException):
+        vote_service.cancel_vote(created.id, OTHER_USER_ID)
