@@ -25,7 +25,7 @@ class VoteClientService(VoteServiceProtocol):
             response = await request_with_retry(
                 self.client,
                 "GET",
-                f"{self._base_url}/votes/{poll_id}/user/{user_id}/",
+                f"{self._base_url}/votes/{poll_id}/user/{user_id}",
                 headers=correlation_http_headers(),
                 timeout=_TIMEOUT,
             )

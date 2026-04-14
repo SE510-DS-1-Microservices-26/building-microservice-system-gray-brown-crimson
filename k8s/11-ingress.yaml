@@ -6,8 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: microservices.local
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

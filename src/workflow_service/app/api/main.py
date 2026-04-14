@@ -28,7 +28,12 @@ async def lifespan(app: FastAPI):
     await http_client.aclose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    openapi_url="/api/v2/workflows/openapi.json",
+    docs_url="/api/v2/workflows/docs",
+    redoc_url="/api/v2/workflows/redoc",
+)
 app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(router, prefix="/api/v2/workflows")

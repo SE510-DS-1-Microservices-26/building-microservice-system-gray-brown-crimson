@@ -43,7 +43,12 @@ async def lifespan(app: FastAPI):
     logger.info("Application is shutting down. Releasing resources...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    openapi_url="/api/v2/core/openapi.json",
+    docs_url="/api/v2/core/docs",
+    redoc_url="/api/v2/core/redoc",
+)
 app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(polls.router, prefix="/api/v2/core")
