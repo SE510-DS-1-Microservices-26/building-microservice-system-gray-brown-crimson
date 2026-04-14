@@ -14,7 +14,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 database_url = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5434/notifications"
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:postgres@localhost:5434/notifications",
 )
 config.set_main_option("sqlalchemy.url", database_url)
 

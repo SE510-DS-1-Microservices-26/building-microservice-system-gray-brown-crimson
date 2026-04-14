@@ -10,6 +10,7 @@ from src.core_service.app.core.exception import (
     PollNotEditableException,
     UserNotFoundException,
     UsersServiceUnavailableException,
+    VoteNotFoundException,
 )
 from src.core_service.app.core.infrastructure import RabbitMQPublisher
 from src.core_service.app.core.infrastructure.outbox_relay import run_outbox_relay
@@ -63,6 +64,14 @@ async def poll_not_editable_handler(_: Request, exc: PollNotEditableException):
             "poll_id": exc.poll_id,
             "current_status": exc.status,
         },
+    )
+
+
+@app.exception_handler(VoteNotFoundException)
+async def vote_not_found_handler(_: Request, exc: VoteNotFoundException):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"error": "Not Found", "vote_id": exc.vote_id},
     )
 
 

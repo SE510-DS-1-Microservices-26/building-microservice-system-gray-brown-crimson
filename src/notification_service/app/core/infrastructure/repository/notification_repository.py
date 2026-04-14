@@ -21,7 +21,7 @@ class NotificationRepository:
                 owner_user_id=notification.owner_user_id,
                 summary=notification.summary,
             )
-            .on_conflict_do_nothing(index_elements=['event_id'])
+            .on_conflict_do_nothing(index_elements=["event_id"])
         )
         self._session.execute(stmt)
         self._session.commit()
