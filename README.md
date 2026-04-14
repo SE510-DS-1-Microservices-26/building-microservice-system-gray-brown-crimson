@@ -147,29 +147,176 @@ kind load docker-image workflow-service:latest
 kubectl apply -f k8s/
 ```
 
-Everything runs in the `microservices` namespace. Check the rollout with:
+Manifests are numbered in dependency order — namespace and infra come up before any application service starts. Check the rollout:
 
 ```bash
 kubectl get pods -n microservices
 kubectl get svc -n microservices
 ```
 
-## Production-readiness features
+### 3. Reach the gateway
 
-The Kubernetes manifests include several production-style configurations out of the box:
+The Ingress uses the hostname `microservices.local`. With kind, use port-forwarding:
 
-- **Resource requests and limits** on every Deployment to prevent resource starvation
-- **Rolling update strategy** so new versions replace running pods gradually with no downtime
-- **Readiness and liveness probes** via the `/health` endpoints — only healthy pods receive traffic, and crashing pods are restarted automatically
-- **Init containers** that wait for databases and RabbitMQ to be ready before the application starts
-- **Secrets and ConfigMaps** for clean separation between configuration and sensitive credentials
+```bash
+kubectl port-forward svc/gateway 8080:80 -n microservices
+```
 
-## RabbitMQ event flow
+Then hit any endpoint at `http://localhost:8080`:
 
-When a vote-related event completes in `core-service`, a message is published to the `core` exchange:
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/api/v2/workflows/health
+```
 
-- **Event:** `core-item.created`
-- **Queue:** `notifications.core-item.created`
-- **Payload fields:** `event_id`, `occurred_at`, `correlation_id`, `core_item_id`, `owner_user_id`, `summary`
+For a real cluster, add the Ingress IP to `/etc/hosts` as `microservices.local` and use that hostname instead.
 
-`notification-service` consumes events from this queue and persists a notification record. Processing is **idempotent** — redeliveries and retries will not create duplicate records.
+### 4. Verify workflow success and failure
+
+**Success** — create a poll, submit a vote, check the workflow state:
+
+```bash
+# start a vote workflow
+curl -s -X POST http://localhost:8080/api/v2/workflows/vote \
+  -H "Content-Type: application/json" \
+  -d '{"poll_id": "<poll_id>", "user_id": "<user_id>", "answers": [{"question_id": "<question_id>", "selected_option": "Python"}]}' | jq .
+
+# poll result — should be COMPLETED
+curl -s http://localhost:8080/api/v2/workflows/<workflow_id> | jq '{state, vote_id}'
+```
+
+**Failure** — close the poll first, then try to vote:
+
+```bash
+curl -s -X PATCH http://localhost:8080/api/v2/core/polls/<poll_id>/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "closed"}'
+
+curl -s http://localhost:8080/api/v2/workflows/<workflow_id> | jq '{state, error}'
+# → { "state": "FAILED", "error": "Poll is not active" }
+```
+
+Submitting a duplicate vote returns HTTP 409 immediately without touching the vote store.
+
+---
+
+## Practice 6 — RabbitMQ Integration
+
+### What was built
+
+- **Event publishing** — after a vote or poll item is created, `core-service` publishes a `core-item.created` event to the `core` exchange (DIRECT, durable) with the routing key `core-item.created`. Messages are marked `PERSISTENT` so they survive a RabbitMQ restart. The active `X-Correlation-Id` is forwarded as a message header.
+- **Event consumption** — `notification-service` is a standalone **FastStream** app that subscribes to the `notifications.core-item.created` queue bound to the same exchange and routing key. On each delivery it parses the payload, saves a notification record, and logs the `event_id` and `correlation_id`.
+- **Idempotency** — `NotificationRepository.save()` uses a PostgreSQL `INSERT ... ON CONFLICT (event_id) DO NOTHING`. If RabbitMQ redelivers a message after a crash or restart, the duplicate insert is silently ignored — no duplicate notification records are ever created.
+
+### Event payload
+
+Every `core-item.created` message carries this JSON body:
+
+```json
+{
+  "event_id":       "01j9z3ht-...",
+  "occurred_at":    "2026-04-14T17:45:00.123456Z",
+  "correlation_id": "a1b2c3d4-e5f6-...",
+  "core_item_id":   "poll-uuid-here",
+  "owner_user_id":  "user-uuid-here",
+  "summary":        "Poll 'Favourite language' created"
+}
+```
+
+### Verifying messages
+
+Open the RabbitMQ management UI:
+
+- **Docker Compose:** `http://localhost:15672` (guest / guest)
+- **Kubernetes (port-forward):** `kubectl port-forward svc/rabbitmq 15672:15672 -n microservices`
+
+Then navigate to **Queues → `notifications.core-item.created` → Get messages**. Create a poll to trigger a publish and confirm the message appears.
+
+From the terminal:
+
+```bash
+# watch notification-service logs for processed events
+kubectl logs -f deployment/notification-service -n microservices | grep "Notification processed"
+
+# or with Docker Compose
+docker compose logs -f notification_service
+```
+
+A successful delivery prints:
+```
+Notification processed: event_id=<uuid> core_item_id=<uuid> correlation_id=<uuid>
+```
+
+---
+
+## Practice 7 — Workflow Service & Kubernetes
+
+**What was built:**
+
+- **Workflow Service (Saga)** — `workflow-service` orchestrates vote submission as a multi-step, stateful process. Workflow state (`PENDING` → `VOTE_SAVED` → `COMPLETED` / `FAILED`) is persisted to its own database after every step, so the system always knows where a workflow stopped. If the poll becomes inactive after a vote is saved, the service compensates by cancelling the vote automatically.
+
+- **Kubernetes deployment** — all services and infrastructure were packaged as numbered manifests in `k8s/`. A dedicated namespace, per-service Secrets/ConfigMaps, PostgreSQL StatefulSets, and RabbitMQ deploy first; application Deployments follow with init containers that wait for their dependencies; an NGINX gateway and Ingress handle external traffic.
+
+## Practice 8 — Resiliency, Correlation IDs & Kubernetes Operations
+
+### Correlation ID end-to-end
+
+Every HTTP request flowing through the system carries an `X-Correlation-Id` header. This is handled by `CorrelationIdMiddleware` in `src/shared/correlation.py`, mounted on every service:
+
+- **Inbound** — if the request already has an `X-Correlation-Id`, the middleware uses it; otherwise it generates a new UUID.
+- **Propagated** — inter-service HTTP calls attach the active correlation ID via `correlation_http_headers()`, so the same ID flows from the gateway through `workflow-service` into `core-service`.
+- **Logged** — `CorrelationIdFilter` injects `correlation_id` into every log record, making it trivial to `grep` a single request trace across all service logs.
+- **Returned** — the correlation ID is echoed back in the response header so clients can record it for support.
+
+### Resiliency policies
+
+Inter-service HTTP calls from `workflow-service` to `core-service` (poll checks and vote writes) go through `request_with_retry` in `http_retry.py`, backed by **Tenacity**:
+
+- **3 attempts** total, with exponential backoff (0.3 s → 0.6 s → 2 s max).
+- Retries on transient network errors (`TimeoutException`, `ConnectError`, `ReadError`) and server-side HTTP errors (5xx and 429).
+- Non-transient errors (4xx) are not retried — they surface immediately as domain exceptions (`VoteServiceUnavailableException`, etc.) and cause the workflow to transition to `FAILED`.
+
+### Scaling core-service
+
+`core-service` runs with **3 replicas** in Kubernetes. Scale it up or down at runtime:
+
+```bash
+kubectl scale deployment core-service --replicas=5 -n microservices
+kubectl get pods -n microservices -l app=core-service
+```
+
+Resource requests and limits are set on every Deployment so the scheduler can place pods reliably and prevent noisy-neighbour resource starvation:
+
+| Service | CPU request | CPU limit | Memory request | Memory limit |
+|---|---|---|---|---|
+| core-service | 100m | 500m | 128Mi | 512Mi |
+| workflow-service | 100m | 500m | 128Mi | 512Mi |
+| gateway | 50m | 200m | 32Mi | 128Mi |
+
+### Rolling updates and rollback
+
+All Deployments use `RollingUpdate` strategy. `core-service` is configured with `maxUnavailable: 1` and `maxSurge: 1`, meaning at most one old pod goes down at a time while one new pod comes up — traffic is never fully interrupted.
+
+**Performing a rollout** (after rebuilding and loading a new image):
+
+```bash
+# trigger a rollout by updating the image
+kubectl set image deployment/core-service core-service=core-service:v2 -n microservices
+
+# watch pods cycle
+kubectl rollout status deployment/core-service -n microservices
+```
+
+**Rolling back** if the new version is unhealthy:
+
+```bash
+kubectl rollout undo deployment/core-service -n microservices
+
+# confirm previous version is active
+kubectl rollout status deployment/core-service -n microservices
+```
+
+Readiness probes (`/health`) ensure that new pods only receive traffic once they are fully started. If a pod never becomes ready, the rollout stalls and the old pods stay up — preventing a bad deploy from taking down the service.
+
+---
+
