@@ -14,7 +14,6 @@ async def lifespan(app: FastAPI):
     app.state.http_client = http_client
 
     yield
-
     await http_client.aclose()
 
 
