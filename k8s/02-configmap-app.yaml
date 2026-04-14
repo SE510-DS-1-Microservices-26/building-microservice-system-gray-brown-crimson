@@ -5,6 +5,6 @@ metadata:
   namespace: microservices
 data:
   USERS_SERVICE_URL: "http://users-service:8001/api/v2/users"
-  RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+  RABBITMQ_URL: "amqp://app_user:app_password@rabbitmq:5672/"
   POLL_SERVICE_URL: "http://core-service:8000/api/v2/core"
   VOTE_SERVICE_URL: "http://core-service:8000/api/v2/core"
