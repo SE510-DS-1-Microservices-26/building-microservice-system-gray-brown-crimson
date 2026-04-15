@@ -1,6 +1,7 @@
 import uuid
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 from src.core_service.app.api.main import app
@@ -75,6 +76,14 @@ class FakeUserServiceClient:
 class FakeOutboxRepository:
     def save(self, event) -> None:
         pass
+
+
+class UnavailableUserServiceClient:
+    def user_exists(self, user_id: str) -> bool:
+        raise UsersServiceUnavailableException()
+
+    def get_user(self, user_id: str) -> dict:
+        raise UsersServiceUnavailableException()
 
 
 @pytest.fixture
@@ -261,4 +270,6 @@ def test_create_poll_returns_503_when_users_service_unavailable(
         headers={"x-user-id": "00000000-0000-0000-0000-000000000001"},
     )
     assert response.status_code == 503
-    assert response.json()["error"] == "Service Unavailable"
+    body = response.json()
+    assert body["error"] == "Service Unavailable"
+    assert body["detail"] == "Users service is unreachable."

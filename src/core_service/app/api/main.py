@@ -86,9 +86,9 @@ async def vote_not_found_handler(_: Request, exc: VoteNotFoundException):
 @app.exception_handler(UserNotFoundException)
 async def user_not_found_handler(_: Request, exc: UserNotFoundException):
     return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_404_NOT_FOUND,
         content={
-            "error": "Bad Request",
+            "error": "Not Found",
             "detail": f"User '{exc.user_id}' does not exist.",
         },
     )

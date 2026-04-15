@@ -28,8 +28,8 @@ class RabbitMQPublisher:
 
     async def publish(self, event: CoreItemCreatedEvent) -> None:
         if self._exchange is None:
-            logger.error("RabbitMQ publisher is not connected; skipping publish")
-            return
+            logger.error("RabbitMQ publisher is not connected; cannot publish")
+            raise RuntimeError("RabbitMQ publisher is not connected")
         body = event.model_dump_json().encode()
         message = aio_pika.Message(
             body=body,
