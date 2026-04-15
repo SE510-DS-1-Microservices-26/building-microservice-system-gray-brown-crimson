@@ -6,7 +6,9 @@ from fastapi.responses import JSONResponse
 
 from src.workflow_service.app.core.exception import (
     PollServiceUnavailableException,
+    VoteAlreadyExistsException,
     VoteServiceUnavailableException,
+    VoteSubmissionAlreadyInProgressException,
 )
 from src.workflow_service.app.core.logger import setup_logging
 from src.shared.correlation import CorrelationIdMiddleware
@@ -36,6 +38,30 @@ app = FastAPI(
 app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(router, prefix="/api/v2/workflows")
+
+
+@app.exception_handler(VoteAlreadyExistsException)
+async def vote_already_exists_handler(_: Request, exc: VoteAlreadyExistsException):
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": "Conflict",
+            "detail": "User has already voted in this poll.",
+        },
+    )
+
+
+@app.exception_handler(VoteSubmissionAlreadyInProgressException)
+async def vote_submission_in_progress_handler(
+    _: Request, exc: VoteSubmissionAlreadyInProgressException
+):
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": "Conflict",
+            "detail": "A vote submission is already in progress.",
+        },
+    )
 
 
 @app.exception_handler(PollServiceUnavailableException)
