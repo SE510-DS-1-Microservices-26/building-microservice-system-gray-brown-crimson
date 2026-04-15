@@ -20,7 +20,7 @@ class PollClientService(PollServiceProtocol):
             response = await request_with_retry(
                 self.client,
                 "GET",
-                f"{self._base_url}/polls/{poll_id}",
+                f"{self._base_url}/polls/internal/{poll_id}",
                 headers=correlation_http_headers(),
                 timeout=_TIMEOUT,
             )
