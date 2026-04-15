@@ -3,9 +3,20 @@ from fastapi import APIRouter, Depends, status
 from src.core_service.app.api.dependencies import get_current_user_id, get_poll_service
 from src.core_service.app.core.application import PollService
 from src.core_service.app.core.dto import CreatePollDto, UpdatePollStatusDto
+from src.core_service.app.core.mapper import PollMapper
 
 
 router = APIRouter(prefix="/polls", tags=["polls"])
+
+
+@router.get("/internal/{poll_id}")
+def get_poll_internal(
+    poll_id: str,
+    service: PollService = Depends(get_poll_service),
+):
+    """Service-to-service endpoint: returns poll without ownership check."""
+    poll = service.find_poll(poll_id)
+    return PollMapper.to_dto(poll)
 
 
 @router.get("/{poll_id}")

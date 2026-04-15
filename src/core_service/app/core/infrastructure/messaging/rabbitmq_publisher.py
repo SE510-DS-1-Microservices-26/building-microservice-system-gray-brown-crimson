@@ -35,6 +35,7 @@ class RabbitMQPublisher:
             body=body,
             content_type="application/json",
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            headers={"correlation_id": event.correlation_id},
         )
         await self._exchange.publish(message, routing_key=ROUTING_KEY)
         logger.info("Published %s (core_item_id=%s)", ROUTING_KEY, event.core_item_id)

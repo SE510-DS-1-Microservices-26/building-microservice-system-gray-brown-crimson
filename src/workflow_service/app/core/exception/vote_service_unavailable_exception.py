@@ -1,3 +1,5 @@
 class VoteServiceUnavailableException(Exception):
-    def __init__(self) -> None:
-        super().__init__("Vote service is unavailable")
+    def __init__(self, *, timeout: bool = False) -> None:
+        self.timeout = timeout
+        msg = "Vote service timeout" if timeout else "Vote service is unavailable"
+        super().__init__(msg)

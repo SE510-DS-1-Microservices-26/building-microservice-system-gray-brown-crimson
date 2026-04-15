@@ -3,6 +3,10 @@ import pytest
 
 from unittest.mock import AsyncMock, Mock
 
+from fastapi.testclient import TestClient
+
+from src.workflow_service.app.api.main import app
+from src.workflow_service.app.api.dependencies import get_vote_workflow_service
 from src.workflow_service.app.core.application.vote_workflow_service import (
     VoteWorkflowService,
 )
@@ -13,6 +17,10 @@ from src.workflow_service.app.core.domain import (
 )
 from src.workflow_service.app.core.dto import StartVoteWorkflowDto
 from src.workflow_service.app.core.dto.start_vote_workflow_dto import AnswerWorkflowDto
+from src.workflow_service.app.core.exception import (
+    VoteAlreadyExistsException,
+    VoteSubmissionAlreadyInProgressException,
+)
 
 
 class FakeWorkflowRepository:
@@ -139,3 +147,48 @@ async def test_vote_workflow_save_failure_sets_failed():
 
     assert result.state == WorkflowState.FAILED
     assert result.last_error == "Vote Service down"
+
+
+_VOTE_PAYLOAD = {
+    "poll_id": str(uuid.uuid4()),
+    "user_id": str(uuid.uuid4()),
+    "answers": [{"question_id": str(uuid.uuid4()), "selected_option": "A"}],
+}
+
+
+def test_create_vote_returns_409_when_user_already_voted():
+    mock_service = Mock(spec=VoteWorkflowService)
+    mock_service.start_vote_workflow = AsyncMock(
+        side_effect=VoteAlreadyExistsException(
+            user_id=_VOTE_PAYLOAD["user_id"], poll_id=_VOTE_PAYLOAD["poll_id"]
+        )
+    )
+
+    app.dependency_overrides[get_vote_workflow_service] = lambda: mock_service
+    try:
+        client = TestClient(app)
+        response = client.post("/api/v2/workflows/vote", json=_VOTE_PAYLOAD)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 409
+    assert response.json()["error"] == "Conflict"
+    assert "already voted" in response.json()["detail"]
+
+
+def test_create_vote_returns_409_when_submission_already_in_progress():
+    mock_service = Mock(spec=VoteWorkflowService)
+    mock_service.start_vote_workflow = AsyncMock(
+        side_effect=VoteSubmissionAlreadyInProgressException()
+    )
+
+    app.dependency_overrides[get_vote_workflow_service] = lambda: mock_service
+    try:
+        client = TestClient(app)
+        response = client.post("/api/v2/workflows/vote", json=_VOTE_PAYLOAD)
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 409
+    assert response.json()["error"] == "Conflict"
+    assert "in progress" in response.json()["detail"]

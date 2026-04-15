@@ -15,6 +15,11 @@ def create_user(
     return service.add_new_user(payload)
 
 
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
 @router.get("/{user_id}")
 def get_user_info(user_id: str, service: UserService = Depends(get_user_service)):
     return service.get_user_info(user_id)
