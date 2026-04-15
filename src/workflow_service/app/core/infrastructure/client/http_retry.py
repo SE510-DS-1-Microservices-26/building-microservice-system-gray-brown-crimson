@@ -40,6 +40,12 @@ async def request_with_retry(
 
     async def do_request() -> httpx.Response:
         http_call = getattr(client, m)
-        return await http_call(url, **kwargs)
+        response = await http_call(url, **kwargs)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if _is_transient_http_error(exc):
+                raise
+        return response
 
     return await _http_retry(do_request)

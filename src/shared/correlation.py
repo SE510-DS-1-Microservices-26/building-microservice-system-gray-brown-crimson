@@ -1,4 +1,5 @@
 import logging
+import re
 import uuid
 from collections.abc import Callable
 from contextvars import ContextVar
@@ -11,6 +12,8 @@ from starlette.responses import Response
 _correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 
 HEADER_NAME = "X-Correlation-Id"
+
+_SAFE_CORRELATION_ID = re.compile(r"^[A-Za-z0-9\-]{1,64}$")
 
 
 def get_correlation_id() -> str:
@@ -41,7 +44,11 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
         raw = request.headers.get(HEADER_NAME) or request.headers.get(
             HEADER_NAME.lower()
         )
-        correlation_id = raw.strip() if raw else str(uuid.uuid4())
+        candidate = raw.strip() if raw else None
+        if candidate and _SAFE_CORRELATION_ID.match(candidate):
+            correlation_id = candidate
+        else:
+            correlation_id = str(uuid.uuid4())
         token = _correlation_id.set(correlation_id)
         try:
             response = await call_next(request)

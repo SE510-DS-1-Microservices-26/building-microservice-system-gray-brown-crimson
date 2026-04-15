@@ -26,7 +26,7 @@ class VoteClientService(VoteServiceProtocol):
                 self.client,
                 "GET",
                 f"{self._base_url}/votes/{poll_id}/user/{user_id}",
-                headers=correlation_http_headers(),
+                headers=self._user_headers(user_id),
                 timeout=_TIMEOUT,
             )
             response.raise_for_status()
