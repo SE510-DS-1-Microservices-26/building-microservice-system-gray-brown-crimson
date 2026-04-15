@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from src.users_service.app.core.exception import UserNotFoundException
 from src.users_service.app.core.logger import setup_logging
 from src.users_service.app.api.routers import users
+from src.shared.correlation import CorrelationIdMiddleware
 
 
 @asynccontextmanager
@@ -19,7 +20,13 @@ async def lifespan(_: FastAPI):
     logger.info("Application is shutting down. Releasing resources...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    openapi_url="/api/v2/users/openapi.json",
+    docs_url="/api/v2/users/docs",
+    redoc_url="/api/v2/users/redoc",
+)
+app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(users.router, prefix="/api/v2/users")
 
@@ -34,7 +41,3 @@ async def user_not_found_handler(_: Request, exc: UserNotFoundException):
         },
     )
 
-
-@app.get("/api/v2/users/health")
-def health_check():
-    return {"status": "ok"}

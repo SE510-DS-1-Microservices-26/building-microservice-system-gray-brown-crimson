@@ -5,7 +5,7 @@ from src.users_service.app.core.application import UserService
 from src.users_service.app.core.dto import CreateUserDto, UpdateUserDto
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -13,6 +13,11 @@ def create_user(
     payload: CreateUserDto, service: UserService = Depends(get_user_service)
 ):
     return service.add_new_user(payload)
+
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 
 @router.get("/{user_id}")
